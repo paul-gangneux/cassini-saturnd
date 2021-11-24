@@ -93,6 +93,42 @@ int main(int argc, char * argv[]) {
     }
   }
 
+  int size;
+  char* buf;
+
+  // décide quoi envoyer au serveur en fonction de opcode
+  if (operation == CLIENT_REQUEST_CREATE_TASK) {
+
+    cli_request_create req;
+    req.OPCODE = htobe16(operation);
+    timing_from_strings(&req.TIMING, minutes_str, hours_str, daysofweek_str);
+    req.COMMANDLINE.ARGC=0; // TODO
+    req.COMMANDLINE.ARGVs=NULL; //TODO
+
+    size = sizeof(req); // TODO : la vraie taille est plus grande, vu qu'il va falloir écrire le contenu de req.COMMANDLINE.ARGVs
+    buf = malloc(size);
+    memcpy(&buf, &req, sizeof(req));
+
+  } else if (operation == CLIENT_REQUEST_LIST_TASKS || operation == CLIENT_REQUEST_TERMINATE) {
+
+    cli_request_simple req;
+    req.OPCODE = htobe16(operation);
+    
+    size = sizeof(req);
+    buf = malloc(size);
+    memcpy(&buf, &req, sizeof(req));
+
+  } else {
+
+    cli_request_task req;
+    req.OPCODE = htobe16(operation);
+    req.TASKID = htobe64(taskid);
+
+    size = sizeof(req);
+    buf = malloc(size);
+    memcpy(&buf, &req, sizeof(req));
+  }
+  
   // definition du chemin vers le tube
   char* pipe_basename;
   if (pipes_directory[strlen(pipes_directory) - 1]=='/') pipe_basename = "saturnd-request-pipe";
@@ -103,41 +139,13 @@ int main(int argc, char * argv[]) {
   strcat(pipe_path, pipe_basename);
 
   // ouverture du tube
-  int pipe_fd = open(pipe_path, O_WRONLY | O_NONBLOCK);
+  int pipe_fd = open(pipe_path, O_WRONLY);
   if (pipe_fd < 0) {
     perror("open");
     goto error;
   }
 
-  printf("aaa\n");
-
-  // décide quoi envoyer au serveur en fonction de opcode
-  if (operation == CLIENT_REQUEST_CREATE_TASK) {
-
-    cli_request_create req;
-    req.OPCODE = operation;
-    timing_from_strings(&req.TIMING, minutes_str, hours_str, daysofweek_str);
-    req.COMMANDLINE.ARGC=0; // TODO
-    req.COMMANDLINE.ARGVs=NULL; //TODO
-
-    write(pipe_fd, &req, sizeof(req)); // éctirure dans pipe
-
-  } else if (operation == CLIENT_REQUEST_LIST_TASKS || operation == CLIENT_REQUEST_TERMINATE) {
-
-    cli_request_simple req;
-    req.OPCODE = operation;
-
-    write(pipe_fd, &req, sizeof(req)); // éctirure dans pipe
-    
-  } else {
-
-    cli_request_task req;
-    req.OPCODE = operation;
-    req.TASKID = taskid;
-
-    write(pipe_fd, &req, sizeof(req)); // éctirure dans pipe
-  }
-  
+  write(pipe_fd, &buf, size); // écriture dans le tube
 
   // TODO : attendre la réponse du serveur
   return EXIT_SUCCESS;
@@ -146,6 +154,7 @@ int main(int argc, char * argv[]) {
   if (errno != 0) perror("main");
   free(pipes_directory);
   free(pipe_path);
+  free(buf);
   close(pipe_fd);
   pipes_directory = NULL;
   return EXIT_FAILURE;
