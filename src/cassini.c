@@ -5,8 +5,8 @@
 #include <fcntl.h>
 
 
-#include "../include/cassini.h"
-#include "../include/timing-text-io.h"
+#include "cassini.h"
+#include "timing-text-io.h"
 
 const char usage_info[] = "\
    usage: cassini [OPTIONS] -l -> list all tasks\n\

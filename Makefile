@@ -9,7 +9,11 @@ all: cassini
 
 .PHONY: distclean
 distclean:
-	rm -rf run/ build/ cassini saturnd
+	rm -rf run/ build/ cassini saturnd -v
 
 cassini: src/cassini.c
 	$(CC) $(OPTS) -I$(HEADERS_PATH) $(SRC_PATH)/timing-text-io.c $(SRC_PATH)/cassini.c -o cassini
+
+.PHONY: test
+test: cassini
+	./run-cassini-tests.sh
