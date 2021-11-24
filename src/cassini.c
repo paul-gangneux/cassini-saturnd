@@ -36,7 +36,7 @@ int main(int argc, char * argv[]) {
   char * pipes_directory = NULL; // TODO : valeur par défaut : /tmp/<USERNAME>/saturnd/pipes
   
   uint16_t operation = CLIENT_REQUEST_LIST_TASKS;
-  uint64_t taskid=-1;
+  uint64_t taskid;
   
   int opt;
   char * strtoull_endp;
@@ -93,8 +93,23 @@ int main(int argc, char * argv[]) {
     }
   }
 
-  char* buf;
-  int size;
+  // definition du chemin vers le tube
+  char* pipe_basename;
+  if (pipes_directory[strlen(pipes_directory) - 1]=='/') pipe_basename = "saturnd-request-pipe";
+  else pipe_basename = "/saturnd-request-pipe";
+
+  char* pipe_path = (char*)calloc(strlen(pipe_basename) + strlen(pipes_directory) + 1, sizeof(char));
+  memcpy(pipe_path, pipes_directory, strlen(pipes_directory));
+  strcat(pipe_path, pipe_basename);
+
+  // ouverture du tube
+  int pipe_fd = open(pipe_path, O_WRONLY | O_NONBLOCK);
+  if (pipe_fd < 0) {
+    perror("open");
+    goto error;
+  }
+
+  printf("aaa\n");
 
   // décide quoi envoyer au serveur en fonction de opcode
   if (operation == CLIENT_REQUEST_CREATE_TASK) {
@@ -105,42 +120,24 @@ int main(int argc, char * argv[]) {
     req.COMMANDLINE.ARGC=0; // TODO
     req.COMMANDLINE.ARGVs=NULL; //TODO
 
-    size = sizeof(req);
-    buf = malloc(size);
-    memcpy(buf, &req, size);
+    write(pipe_fd, &req, sizeof(req)); // éctirure dans pipe
 
-  } else if (taskid!=-1) {
+  } else if (operation == CLIENT_REQUEST_LIST_TASKS || operation == CLIENT_REQUEST_TERMINATE) {
 
     cli_request_simple req;
     req.OPCODE = operation;
 
-    size = sizeof(req);
-    buf = malloc(size);
-    memcpy(buf, &req, size);
-
+    write(pipe_fd, &req, sizeof(req)); // éctirure dans pipe
+    
   } else {
+
     cli_request_task req;
     req.OPCODE = operation;
+    req.TASKID = taskid;
 
-    size = sizeof(req);
-    buf = malloc(size);
-    memcpy(buf, &req, size);
+    write(pipe_fd, &req, sizeof(req)); // éctirure dans pipe
   }
-
-  char* pipe_basename = "saturnd-request-pipe";
-
-  char* pipe_path = calloc(strlen(pipe_basename) + strlen(pipes_directory) + 1, 0);
-
-  memcpy(pipes_directory, pipe_path, strlen(pipes_directory));
-  strcat(pipe_path, pipe_basename);
-
-  int pipe_fd = open(pipe_path, O_WRONLY);
-  if (pipe_fd < 0) {
-    perror("open");
-    goto error;
-  }
-
-  write(pipe_fd, buf, size);
+  
 
   // TODO : attendre la réponse du serveur
   return EXIT_SUCCESS;
@@ -149,7 +146,7 @@ int main(int argc, char * argv[]) {
   if (errno != 0) perror("main");
   free(pipes_directory);
   free(pipe_path);
-  free(buf);
+  close(pipe_fd);
   pipes_directory = NULL;
   return EXIT_FAILURE;
 }

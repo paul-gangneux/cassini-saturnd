@@ -1,14 +1,15 @@
 CC = gcc
-OPTS = -Werror -Wextra
+OPTS = -Werror -Wextra -Wall -pedantic
 
 HEADERS_PATH = ./include
 SRC_PATH = ./src
 
-all: cassini saturnd
 .PHONY: all
+all: cassini
 
+.PHONY: distclean
 distclean:
-	rm -rf build/ cassini saturnd
+	rm -rf run/ build/ cassini saturnd
 
-cassini:
-	$(CC) $(OPTS) -I$(HEADERS_PATH) $(SRC_PATH)/cassini.c -o cassini
+cassini: src/cassini.c
+	$(CC) $(OPTS) -I$(HEADERS_PATH) $(SRC_PATH)/timing-text-io.c $(SRC_PATH)/cassini.c -o cassini
