@@ -1,6 +1,12 @@
 #include <stdint.h>
+#include <stdio.h>
+#include <unistd.h>
+//#include <sys/types.h>
+#include <fcntl.h>
 
-#include "cassini.h"
+
+#include "../include/cassini.h"
+#include "../include/timing-text-io.h"
 
 const char usage_info[] = "\
    usage: cassini [OPTIONS] -l -> list all tasks\n\
@@ -27,10 +33,10 @@ int main(int argc, char * argv[]) {
   char * minutes_str = "*";
   char * hours_str = "*";
   char * daysofweek_str = "*";
-  char * pipes_directory = NULL;
+  char * pipes_directory = NULL; // TODO : valeur par défaut : /tmp/<USERNAME>/saturnd/pipes
   
   uint16_t operation = CLIENT_REQUEST_LIST_TASKS;
-  uint64_t taskid;
+  uint64_t taskid=-1;
   
   int opt;
   char * strtoull_endp;
@@ -87,15 +93,63 @@ int main(int argc, char * argv[]) {
     }
   }
 
-  // --------
-  // | TODO |
-  // --------
-  
+  char* buf;
+  int size;
+
+  // décide quoi envoyer au serveur en fonction de opcode
+  if (operation == CLIENT_REQUEST_CREATE_TASK) {
+
+    cli_request_create req;
+    req.OPCODE = operation;
+    timing_from_strings(&req.TIMING, minutes_str, hours_str, daysofweek_str);
+    req.COMMANDLINE.ARGC=0; // TODO
+    req.COMMANDLINE.ARGVs=NULL; //TODO
+
+    size = sizeof(req);
+    buf = malloc(size);
+    memcpy(buf, &req, size);
+
+  } else if (taskid!=-1) {
+
+    cli_request_simple req;
+    req.OPCODE = operation;
+
+    size = sizeof(req);
+    buf = malloc(size);
+    memcpy(buf, &req, size);
+
+  } else {
+    cli_request_task req;
+    req.OPCODE = operation;
+
+    size = sizeof(req);
+    buf = malloc(size);
+    memcpy(buf, &req, size);
+  }
+
+  char* pipe_basename = "saturnd-request-pipe";
+
+  char* pipe_path = calloc(strlen(pipe_basename) + strlen(pipes_directory) + 1, 0);
+
+  memcpy(pipes_directory, pipe_path, strlen(pipes_directory));
+  strcat(pipe_path, pipe_basename);
+
+  int pipe_fd = open(pipe_path, O_WRONLY);
+  if (pipe_fd < 0) {
+    perror("open");
+    goto error;
+  }
+
+  write(pipe_fd, buf, size);
+
+  // TODO : attendre la réponse du serveur
   return EXIT_SUCCESS;
 
  error:
   if (errno != 0) perror("main");
   free(pipes_directory);
+  free(pipe_path);
+  free(buf);
   pipes_directory = NULL;
   return EXIT_FAILURE;
 }

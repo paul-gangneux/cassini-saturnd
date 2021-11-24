@@ -9,4 +9,6 @@ struct timing {
   uint8_t daysofweek;
 };
 
+typedef struct timing timing;
+
 #endif // TIMING_H
