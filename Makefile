@@ -1,5 +1,5 @@
 CC = gcc
-OPTS = -Werror -Wextra -Wall -pedantic
+OPTS = -Wextra -Wall -pedantic
 
 HEADERS_PATH = ./include
 SRC_PATH = ./src
