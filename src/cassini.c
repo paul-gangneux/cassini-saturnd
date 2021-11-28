@@ -131,8 +131,14 @@ int main(int argc, char * argv[]) {
   
   // definition du chemin vers le tube
   char* pipe_basename;
-  if (pipes_directory[strlen(pipes_directory) - 1]=='/') pipe_basename = "saturnd-request-pipe";
-  else pipe_basename = "/saturnd-request-pipe";
+  char* reply_basename;
+  if (pipes_directory[strlen(pipes_directory) - 1]=='/') {
+    pipe_basename = "saturnd-request-pipe";
+    reply_basename = "saturnd-reply-pipe";
+  } else {
+    pipe_basename = "/saturnd-request-pipe";
+    reply_basename = "/saturnd-reply-pipe";
+  }
 
   char* pipe_path = (char*)calloc(strlen(pipe_basename) + strlen(pipes_directory) + 1, sizeof(char));
   memcpy(pipe_path, pipes_directory, strlen(pipes_directory));
@@ -147,13 +153,36 @@ int main(int argc, char * argv[]) {
 
   write(pipe_fd, &buf, size); // écriture dans le tube
 
+
   // TODO : attendre la réponse du serveur
+  char* reply_path = malloc(strlen(pipes_directory) + strlen(reply_basename));
+  sprintf(reply_path,  "%s%s", pipes_directory, reply_basename);
+  
+  int reply_fd = open(reply_path, O_RDONLY);
+  if (reply_fd < 0) {
+    perror("open reply pipe");
+    goto error;
+  }
+
+  // TODO we need to differentiate buffer size and stuff from here, depending
+  // on the request we sent
+  char* reply_buffer[2];
+  read(reply_fd, reply_buffer, 2);
+
+  // RE because big endian, faster to compare this way
+  // FIXME this might segfault
+  if (strcmp(*reply_buffer, "RE") == 0) {
+    puts("got ER reply");
+    goto error;
+  }
+
   return EXIT_SUCCESS;
 
  error:
   if (errno != 0) perror("main");
   free(pipes_directory);
   free(pipe_path);
+  free(reply_path);
   free(buf);
   close(pipe_fd);
   pipes_directory = NULL;
