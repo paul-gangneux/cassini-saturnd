@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include "timing.h"
+#include "customstring.h"
 
 #define CLIENT_REQUEST_LIST_TASKS 0x4c53              // 'LS'
 #define CLIENT_REQUEST_CREATE_TASK 0x4352             // 'CR'
@@ -14,8 +15,8 @@
 
 typedef struct {
 	uint32_t ARGC;
-	char**   ARGVs;
-} commandline; // c'est p'tet pas le bon endroit pour mettre ça
+	string* ARGVs;
+} commandline;
 
 typedef struct {
 	uint16_t OPCODE;
@@ -31,6 +32,13 @@ typedef struct {
     timing TIMING;
     commandline COMMANDLINE;
 } cli_request_create;
+
+void commandline_free(commandline cmdl) {
+	for (uint32_t i = 0; i < cmdl.ARGC; i++) {
+		string_free(cmdl.ARGVs[i]);
+	}
+	free(cmdl.ARGVs);
+}
 
 
 #endif // CLIENT_REQUEST_H

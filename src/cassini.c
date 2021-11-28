@@ -4,7 +4,7 @@
 //#include <sys/types.h>
 #include <fcntl.h>
 
-
+#include "customstring.h"
 #include "cassini.h"
 #include "timing-text-io.h"
 
@@ -26,6 +26,26 @@ const char usage_info[] = "\
    options:\n\
      -p PIPES_DIR -> look for the pipes in PIPES_DIR (default: /tmp/<USERNAME>/saturnd/pipes)\n\
 ";
+
+commandline commandlineFromArgs(int argc, char * argv[]) {
+  commandline cmdl;
+  // on suppose que la commande à executer se trouve à la fin 
+  int i = 1; // indice du début de la commande
+  while (i < argc) {
+    if (argv[i][0]=='-') {
+      if (argv[i][1]=='c') i++;
+      else if (strlen(argv[i])>2) i++; // c'est vite fait mal fait mais ça fonctionne
+      else i+=2;
+    }
+    else break;
+  }
+  cmdl.ARGC = argc-i;
+  cmdl.ARGVs = (string*) malloc(cmdl.ARGC*sizeof(string));
+  for (unsigned int j=0; j<cmdl.ARGC; j++) {
+    cmdl.ARGVs[j] = string_create(argv[i+j]);
+  }
+  return cmdl;
+}
 
 int main(int argc, char * argv[]) {
   errno = 0;
@@ -97,28 +117,60 @@ int main(int argc, char * argv[]) {
   char* buf;
 
   // décide quoi envoyer au serveur en fonction de opcode
+  // cas création d'une tache 
   if (operation == CLIENT_REQUEST_CREATE_TASK) {
-
+    //printf("aaa\n");
     cli_request_create req;
     req.OPCODE = htobe16(operation);
     timing_from_strings(&req.TIMING, minutes_str, hours_str, daysofweek_str);
-    req.COMMANDLINE.ARGC=0; // TODO
-    req.COMMANDLINE.ARGVs=NULL; //TODO
+    req.COMMANDLINE = commandlineFromArgs(argc, argv);
 
-    size = sizeof(req); // TODO : la vraie taille est plus grande, vu qu'il va falloir écrire le contenu de req.COMMANDLINE.ARGVs
-    buf = malloc(size);
-    memcpy(&buf, &req, sizeof(req));
+    //string test[4] = {string_create("this"),string_create("is"),string_create("a"),string_create("test")};
+    string cmdl = string_concatStringsKeepLength(req.COMMANDLINE.ARGVs, req.COMMANDLINE.ARGC);
 
-  } else if (operation == CLIENT_REQUEST_LIST_TASKS || operation == CLIENT_REQUEST_TERMINATE) {
+    size = sizeof(req.OPCODE)+sizeof(req.TIMING)+sizeof(req.COMMANDLINE.ARGC)+cmdl.length;
+
+    buf = (char*) calloc(size, 1);
+
+    //  conversion en big-endian ici
+    //req.TIMING.daysofweek=htobe16(req.TIMING.daysofweek);
+    req.TIMING.hours=htobe32(req.TIMING.hours);
+    req.TIMING.minutes=htobe64(req.TIMING.minutes);
+
+    int len = 0;
+
+    int localsize = sizeof(req.OPCODE);
+    memcpy(&buf, &(req.OPCODE), localsize);
+    len+=localsize;
+
+    localsize = sizeof(req.TIMING);
+    memcpy(&buf+len, &(req.TIMING), localsize); 
+    len+=localsize;
+
+    localsize = cmdl.length;
+    memcpy(&buf[len], &cmdl.chars, localsize);
+    
+    commandline_free(req.COMMANDLINE);
+    string_free(cmdl);
+
+    write(STDOUT_FILENO, &buf, size);
+    write(STDOUT_FILENO, "\n", 1);
+
+  }
+  // cas où la requête est juste l'opcode
+  else if (operation == CLIENT_REQUEST_LIST_TASKS || operation == CLIENT_REQUEST_TERMINATE) {
 
     cli_request_simple req;
     req.OPCODE = htobe16(operation);
     
     size = sizeof(req);
-    buf = malloc(size);
+    buf = (char*) malloc(size);
+    //buf[size] = '\0';
     memcpy(&buf, &req, sizeof(req));
 
-  } else {
+  } 
+  // cas où la requete est opcode + taskid
+  else {
 
     cli_request_task req;
     req.OPCODE = htobe16(operation);
@@ -126,9 +178,9 @@ int main(int argc, char * argv[]) {
 
     size = sizeof(req);
     buf = malloc(size);
-    memcpy(&buf, &req, sizeof(req));
+    memcpy(&buf, &req, sizeof(req)); 
   }
-  
+  ////printf("buf: %s\n", buf);
   // definition du chemin vers le tube
   char* pipe_basename;
   if (pipes_directory[strlen(pipes_directory) - 1]=='/') pipe_basename = "saturnd-request-pipe";
@@ -137,6 +189,8 @@ int main(int argc, char * argv[]) {
   char* pipe_path = (char*)calloc(strlen(pipe_basename) + strlen(pipes_directory) + 1, sizeof(char));
   memcpy(pipe_path, pipes_directory, strlen(pipes_directory));
   strcat(pipe_path, pipe_basename);
+
+  ////printf("buf: %s\n", buf);
 
   // ouverture du tube
   int pipe_fd = open(pipe_path, O_WRONLY);
