@@ -4,7 +4,7 @@ OPTS = -Wextra -Wall -pedantic
 HEADERS_PATH = ./include
 SRC_PATH = ./src
 
-headers = $(HEADERS_PATH)/customstring.h $(HEADERS_PATH)/client-request.h
+headers = $(HEADERS_PATH)/custom-string.h $(HEADERS_PATH)/client-request.h
 
 .PHONY: all
 all: cassini
@@ -13,8 +13,8 @@ all: cassini
 distclean:
 	rm -rf run/ build/ cassini saturnd -v
 
-cassini: src/cassini.c $(headers)
-	$(CC) $(OPTS) -I$(HEADERS_PATH) $(SRC_PATH)/timing-text-io.c $(SRC_PATH)/cassini.c -o cassini
+cassini: src/cassini.c $(headers) $(SRC_PATH)/custom-string.c
+	$(CC) $(OPTS) -I$(HEADERS_PATH) $(SRC_PATH)/timing-text-io.c $(SRC_PATH)/custom-string.c $(SRC_PATH)/cassini.c -o cassini
 
 .PHONY: test
 test: cassini
