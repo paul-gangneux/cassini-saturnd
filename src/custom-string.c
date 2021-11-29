@@ -31,7 +31,6 @@ string_p string_concatStringsKeepLength(string_p* strArray, int nb) {
   
   s->chars=(char*) malloc(s->length);
 
-  // je crois qu'il y a un big ici mais je sais pas où exactement
   int len=0;
   for (int i=0; i<nb; i++) {
     uint32_t be_size = htobe32(strArray[i]->length);

@@ -135,8 +135,6 @@ int main(int argc, char * argv[]) {
     uint8_t daysofweek = tim.daysofweek;
     uint32_t cmd_argc = htobe32(cmdl->ARGC);
 
-    string_println(cmdl_string);
-
     size = sizeof(req)+cmdl_string->length;
     buf = (char*) malloc(size);    
 
