@@ -34,9 +34,9 @@ string_p string_concatStringsKeepLength(string_p* strArray, int nb) {
   int len=0;
   for (int i=0; i<nb; i++) {
     uint32_t be_size = htobe32(strArray[i]->length);
-    memcpy(&s->chars[len], (char*)&be_size, intsize);
+    memcpy(s->chars+len, &be_size, intsize);
     len += intsize;
-    memcpy(&s->chars[len], strArray[i]->chars, strArray[i]->length);
+    memcpy(s->chars+len, strArray[i]->chars, strArray[i]->length);
     len += strArray[i]->length;
   }
 

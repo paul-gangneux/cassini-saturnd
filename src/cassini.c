@@ -138,15 +138,15 @@ int main(int argc, char * argv[]) {
     size = sizeof(req)+cmdl_string->length;
     buf = (char*) malloc(size);    
 
-    memcpy(&req.opcode, &opcode, sizeof(uint16_t));
-    memcpy(&req.min, &minutes, sizeof(uint64_t));
-    memcpy(&req.hours, &hours, sizeof(uint32_t));
-    memcpy(&req.day, &daysofweek, sizeof(uint8_t));
-    memcpy(&req.argc, &cmd_argc, sizeof(uint32_t));
+    memcpy(req.opcode, &opcode, sizeof(uint16_t));
+    memcpy(req.min, &minutes, sizeof(uint64_t));
+    memcpy(req.hours, &hours, sizeof(uint32_t));
+    memcpy(req.day, &daysofweek, sizeof(uint8_t));
+    memcpy(req.argc, &cmd_argc, sizeof(uint32_t));
 
     char* buf2 = (char*) (buf+sizeof(req));
-    memcpy(&buf, &req, sizeof(req));
-    memcpy(&buf2, cmdl_string->chars, cmdl_string->length);
+    memcpy(buf, &req, sizeof(req));
+    memcpy(buf2, cmdl_string->chars, cmdl_string->length);
 
     commandline_free(cmdl);
     string_free(cmdl_string);
@@ -155,24 +155,25 @@ int main(int argc, char * argv[]) {
   // cas où la requête est juste l'opcode
   else if (operation == CLIENT_REQUEST_LIST_TASKS || operation == CLIENT_REQUEST_TERMINATE) {
 
-    cli_request_simple req;
-    req.OPCODE = htobe16(operation);
+    uint16_t opcode_be = htobe16(operation);
     
-    size = sizeof(req);
+    size = sizeof(uint16_t);
     buf = (char*) malloc(size);
-    memcpy(&buf, &req, sizeof(req));
+    memcpy(buf, &opcode_be, sizeof(uint16_t));
 
   } 
   // cas où la requete est opcode + taskid
   else {
 
-    cli_request_task req;
-    req.OPCODE = htobe16(operation);
-    req.TASKID = htobe64(taskid);
+    cli_request_task_chars req;
+    uint16_t opcode_be = htobe16(operation);
+    uint64_t taskid_be = htobe64(taskid);
+    memcpy(req.opcode, &opcode_be, sizeof(uint16_t));
+    memcpy(req.taskid, &taskid_be, sizeof(uint64_t));
 
     size = sizeof(req);
     buf = malloc(size);
-    memcpy(&buf, &req, sizeof(req)); 
+    memcpy(buf, &req, sizeof(req)); 
   }
   
   // definition du chemin vers le tube
@@ -193,7 +194,7 @@ int main(int argc, char * argv[]) {
     goto error;
   }
 
-  write(pipe_fd, &buf, size); // écriture dans le tube
+  write(pipe_fd, buf, size); // écriture dans le tube
 
   // TODO : attendre la réponse du serveur
   return EXIT_SUCCESS;

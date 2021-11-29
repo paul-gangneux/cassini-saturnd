@@ -11,7 +11,7 @@ all: cassini
 
 .PHONY: distclean
 distclean:
-	rm -rf run/ build/ cassini saturnd -v
+	rm -rf run/ build/ cassini saturnd cassini-debug -v
 
 cassini: src/cassini.c $(headers) $(SRC_PATH)/custom-string.c
 	$(CC) $(OPTS) -I$(HEADERS_PATH) $(SRC_PATH)/timing-text-io.c $(SRC_PATH)/custom-string.c $(SRC_PATH)/cassini.c -o cassini
@@ -28,3 +28,8 @@ killtests:
 test2: cassini
 	 ./cassini -p ./run/pipes -c echo hello
 
+cassini-debug: src/cassini.c $(headers) $(SRC_PATH)/custom-string.c
+	$(CC) -g $(OPTS) -I$(HEADERS_PATH) $(SRC_PATH)/timing-text-io.c $(SRC_PATH)/custom-string.c $(SRC_PATH)/cassini.c -o cassini-debug
+
+debug: cassini-debug
+	gdb ./cassini-debug -p ./run/pipes -c echo hello

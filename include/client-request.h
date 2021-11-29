@@ -41,6 +41,11 @@ typedef struct {
     char argc[4];
 } cli_request_create_chars;
 
+typedef struct {
+	char opcode[2];
+    char taskid[8];
+} cli_request_task_chars;
+
 
 void commandline_free(commandline* cmdl) {
 	for (uint32_t i = 0; i < cmdl->ARGC; i++) {

@@ -3,3 +3,4 @@ cassini
 run/
 *.dSYM
 .vscode
+.cassini-debug
