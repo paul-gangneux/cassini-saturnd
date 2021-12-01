@@ -3,6 +3,7 @@
 #include <unistd.h>
 //#include <sys/types.h>
 #include <fcntl.h>
+#include <inttypes.h>
 
 #include "custom-string.h"
 #include "cassini.h"
@@ -49,7 +50,7 @@ commandline* commandlineFromArgs(int argc, char * argv[]) {
 
 //Ouvre le tube saturnd-request-pipe en ecriture si resquest==1 et le tube saturnd-reply-pipe sinon
 //renvoi -1 si erreure
-int openTube (int request, char * pipes_directory){
+int openPipe (int request, char * pipes_directory){
   char* pipe_basename;
   
   if (strlen(pipes_directory)==0) return -1;
@@ -224,18 +225,16 @@ int main(int argc, char * argv[]) {
     goto error;
   }
 */
-  int pipe_fd = openTube(1, pipes_directory);
+  int pipe_fd = openPipe(1, pipes_directory);
   if (pipe_fd < 0) {
     perror("open");
     goto error;
   }
   write(pipe_fd, buf, size); // écriture dans le tube
-
-  // TODO : attendre la réponse du serveur
+  close(pipe_fd);
 
   //Ouvertrure du tube de reponse pour la lire
-
-  int reply_pipe = openTube(1, pipes_directory);
+  int reply_pipe = openPipe(1, pipes_directory);
   if (reply_pipe < 0) {
     perror("open");
     goto error;
@@ -268,8 +267,10 @@ int main(int argc, char * argv[]) {
   //Case CREATE
   else if (operation == CLIENT_REQUEST_CREATE_TASK){
     if (*reply_buffer == SERVER_REPLY_OK)  {
-      printf ("0 TODO");
-      //TODO : Lire la suite et afficher le TASKID <uint64>
+      printf ("0");
+      uint64_t* get_task_id = malloc (sizeof(uint64_t));
+      read(reply_pipe, get_task_id, sizeof(uint64_t));
+      printf("%"PRIu64"\n", *get_task_id);
     }else{ //Le cas ER n'est pas a gerer car il n'est pas sensé exister
       perror("create");
       goto error;
@@ -281,6 +282,7 @@ int main(int argc, char * argv[]) {
       printf ("0"); //Affiche 0 si reussite
     }else if (*reply_buffer == SERVER_REPLY_ERROR) {
       printf ("1"); 
+      
       //TODO: verifier que NF est le prochain truc a lire
     } else{
       perror("remove");
@@ -322,6 +324,7 @@ int main(int argc, char * argv[]) {
       goto error;
     }
   }
+
   free (reply_buffer);
   free(pipes_directory);
   free(buf);
