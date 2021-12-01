@@ -240,8 +240,9 @@ int main(int argc, char * argv[]) {
     goto error;
   }
 
-  uint16_t* reply_buffer = malloc (sizeof(uint16_t));
-  read(reply_pipe, reply_buffer, sizeof(uint16_t)); // lecture dans le tube
+  uint16_t reply_buffer;
+  read(reply_pipe, &reply_buffer, sizeof(uint16_t)); // lecture dans le tube
+  reply_buffer = be16toh(reply_buffer);
 
   // RE because big endian, faster to compare this way
   // FIXME this might segfault
@@ -256,7 +257,7 @@ int main(int argc, char * argv[]) {
 //Si on lit autre chose que ce qui est autorisé: goto error
 // Case LIST
   if (operation == CLIENT_REQUEST_LIST_TASKS ){
-    if (*reply_buffer == SERVER_REPLY_OK) {
+    if (reply_buffer == SERVER_REPLY_OK) {
       printf ("0 TODO");
       //TODO : Lire la suite pour tout afficher
     }else{ //Le cas ER n'est pas a gerer car il n'est pas sensé exister
@@ -266,7 +267,7 @@ int main(int argc, char * argv[]) {
   }
   //Case CREATE
   else if (operation == CLIENT_REQUEST_CREATE_TASK){
-    if (*reply_buffer == SERVER_REPLY_OK)  {
+    if (reply_buffer == SERVER_REPLY_OK)  {
       printf ("0");
       uint64_t* get_task_id = malloc (sizeof(uint64_t));
       read(reply_pipe, get_task_id, sizeof(uint64_t));
@@ -278,9 +279,9 @@ int main(int argc, char * argv[]) {
   }
   //Case REMOVE
   else if (operation == CLIENT_REQUEST_REMOVE_TASK){
-    if (*reply_buffer == SERVER_REPLY_OK)  {
+    if (reply_buffer == SERVER_REPLY_OK)  {
       printf ("0"); //Affiche 0 si reussite
-    }else if (*reply_buffer == SERVER_REPLY_ERROR) {
+    }else if (reply_buffer == SERVER_REPLY_ERROR) {
       printf ("1"); 
       
       //TODO: verifier que NF est le prochain truc a lire
@@ -291,10 +292,10 @@ int main(int argc, char * argv[]) {
   }
   //Case TIMES_EXITCODE
   else if (operation == CLIENT_REQUEST_GET_TIMES_AND_EXITCODES){
-    if (*reply_buffer == SERVER_REPLY_OK)  {
+    if (reply_buffer == SERVER_REPLY_OK)  {
       printf ("0 TODO"); 
       //TODO : Afficher info (time + exit code) on all the past runs of a task
-    }else if (*reply_buffer == SERVER_REPLY_ERROR) {
+    }else if (reply_buffer == SERVER_REPLY_ERROR) {
       printf ("1"); 
       //TODO: verifier que NF est le prochain truc a lire. meme chose que remove
     } else{
@@ -304,7 +305,7 @@ int main(int argc, char * argv[]) {
   }
     //Case TERMINATE
   else if (operation == CLIENT_REQUEST_TERMINATE){
-    if (*reply_buffer == SERVER_REPLY_OK)  {
+    if (reply_buffer == SERVER_REPLY_OK)  {
       printf ("0");
     } else{
       perror("times exitcode");
@@ -313,10 +314,10 @@ int main(int argc, char * argv[]) {
   }
   //Case STDOUT
   else if (operation == CLIENT_REQUEST_GET_STDOUT || operation == CLIENT_REQUEST_GET_STDERR){
-    if (*reply_buffer == SERVER_REPLY_OK)  {
+    if (reply_buffer == SERVER_REPLY_OK)  {
       printf ("0");
       //TODO print la reponse 
-    }else if (*reply_buffer == SERVER_REPLY_ERROR) {
+    }else if (reply_buffer == SERVER_REPLY_ERROR) {
       printf ("1"); 
       //TODO: Deux erreures possibles, NF et NR
     } else{
@@ -325,7 +326,7 @@ int main(int argc, char * argv[]) {
     }
   }
 
-  free (reply_buffer);
+  //free (reply_buffer);
   free(pipes_directory);
   free(buf);
   close(pipe_fd);
