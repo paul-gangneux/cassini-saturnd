@@ -1,6 +1,12 @@
 #include <stdint.h>
+#include <stdio.h>
+#include <unistd.h>
+//#include <sys/types.h>
+#include <fcntl.h>
 
+#include "custom-string.h"
 #include "cassini.h"
+#include "timing-text-io.h"
 
 const char usage_info[] = "\
    usage: cassini [OPTIONS] -l -> list all tasks\n\
@@ -21,13 +27,33 @@ const char usage_info[] = "\
      -p PIPES_DIR -> look for the pipes in PIPES_DIR (default: /tmp/<USERNAME>/saturnd/pipes)\n\
 ";
 
+commandline* commandlineFromArgs(int argc, char * argv[]) {
+  commandline* cmdl = (commandline*) malloc(sizeof(commandline));
+  // on suppose que la commande à executer se trouve à la fin 
+  int i = 1; // indice du début de la commande
+  while (i < argc) {
+    if (argv[i][0]=='-') {
+      if (argv[i][1]=='c') i++;
+      else if (strlen(argv[i])>2) i++; // c'est vite fait mal fait mais ça fonctionne
+      else i+=2;
+    }
+    else break;
+  }
+  cmdl->ARGC = argc-i;
+  cmdl->ARGVs = (string_p*) malloc(cmdl->ARGC*sizeof(string_p));
+  for (unsigned int j=0; j<cmdl->ARGC; j++) {
+    cmdl->ARGVs[j] = string_create(argv[i+j]);
+  }
+  return cmdl;
+}
+
 int main(int argc, char * argv[]) {
   errno = 0;
   
   char * minutes_str = "*";
   char * hours_str = "*";
   char * daysofweek_str = "*";
-  char * pipes_directory = NULL;
+  char * pipes_directory = NULL; // TODO : valeur par défaut : /tmp/<USERNAME>/saturnd/pipes
   
   uint16_t operation = CLIENT_REQUEST_LIST_TASKS;
   uint64_t taskid;
@@ -87,15 +113,98 @@ int main(int argc, char * argv[]) {
     }
   }
 
-  // --------
-  // | TODO |
-  // --------
+  if (pipes_directory==NULL) goto error;
+
+  int size;
+  char* buf;
+
+  // décide quoi envoyer au serveur en fonction de opcode
+  // cas création d'une tache 
+  if (operation == CLIENT_REQUEST_CREATE_TASK) {
+    
+    cli_request_create_chars req;
+    uint16_t opcode = htobe16(operation);
+    timing tim;
+    timing_from_strings(&tim, minutes_str, hours_str, daysofweek_str);
+    commandline* cmdl = commandlineFromArgs(argc, argv);
+    string_p cmdl_string = string_concatStringsKeepLength(cmdl->ARGVs, cmdl->ARGC);
+
+    // conversion en big-endian ici
+    uint64_t minutes = htobe64(tim.minutes);
+    uint32_t hours = htobe32(tim.hours);
+    uint8_t daysofweek = tim.daysofweek;
+    uint32_t cmd_argc = htobe32(cmdl->ARGC);
+
+    size = sizeof(req)+cmdl_string->length;
+    buf = (char*) malloc(size);    
+
+    memcpy(req.opcode, &opcode, sizeof(uint16_t));
+    memcpy(req.min, &minutes, sizeof(uint64_t));
+    memcpy(req.hours, &hours, sizeof(uint32_t));
+    memcpy(req.day, &daysofweek, sizeof(uint8_t));
+    memcpy(req.argc, &cmd_argc, sizeof(uint32_t));
+
+    char* buf2 = (char*) (buf+sizeof(req));
+    memcpy(buf, &req, sizeof(req));
+    memcpy(buf2, cmdl_string->chars, cmdl_string->length);
+
+    commandline_free(cmdl);
+    string_free(cmdl_string);
+
+  }
+  // cas où la requête est juste l'opcode
+  else if (operation == CLIENT_REQUEST_LIST_TASKS || operation == CLIENT_REQUEST_TERMINATE) {
+
+    uint16_t opcode_be = htobe16(operation);
+    
+    size = sizeof(uint16_t);
+    buf = (char*) malloc(size);
+    memcpy(buf, &opcode_be, sizeof(uint16_t));
+
+  } 
+  // cas où la requete est opcode + taskid
+  else {
+
+    cli_request_task_chars req;
+    uint16_t opcode_be = htobe16(operation);
+    uint64_t taskid_be = htobe64(taskid);
+    memcpy(req.opcode, &opcode_be, sizeof(uint16_t));
+    memcpy(req.taskid, &taskid_be, sizeof(uint64_t));
+
+    size = sizeof(req);
+    buf = malloc(size);
+    memcpy(buf, &req, sizeof(req)); 
+  }
   
+  // definition du chemin vers le tube
+  char* pipe_basename;
+  
+  if (strlen(pipes_directory)==0) goto error;
+  if (pipes_directory[strlen(pipes_directory) - 1]=='/') pipe_basename = "saturnd-request-pipe";
+  else pipe_basename = "/saturnd-request-pipe";
+  
+  char* pipe_path = (char*)calloc(strlen(pipe_basename) + strlen(pipes_directory) + 1, sizeof(char));
+  memcpy(pipe_path, pipes_directory, strlen(pipes_directory));
+  strcat(pipe_path, pipe_basename);
+
+  // ouverture du tube
+  int pipe_fd = open(pipe_path, O_WRONLY);
+  if (pipe_fd < 0) {
+    perror("open");
+    goto error;
+  }
+
+  write(pipe_fd, buf, size); // écriture dans le tube
+
+  // TODO : attendre la réponse du serveur
   return EXIT_SUCCESS;
 
  error:
   if (errno != 0) perror("main");
   free(pipes_directory);
+  free(pipe_path);
+  free(buf);
+  close(pipe_fd);
   pipes_directory = NULL;
   return EXIT_FAILURE;
 }

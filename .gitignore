@@ -2,3 +2,5 @@ saturnd
 cassini
 run/
 *.dSYM
+.vscode
+cassini-debug
