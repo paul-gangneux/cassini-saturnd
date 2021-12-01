@@ -235,6 +235,104 @@ int main(int argc, char * argv[]) {
 
   //Ouvertrure du tube de reponse pour la lire
 
+  int reply_pipe = openTube(1, pipes_directory);
+  if (reply_pipe < 0) {
+    perror("open");
+    goto error;
+  }
+
+  char* reply_buffer[2];
+  read(reply_pipe, reply_buffer, 2); // lecture dans le tube
+
+
+  // RE because big endian, faster to compare this way
+  // FIXME this might segfault
+/*  if (strcmp(*reply_buffer, "RE") == 0) {
+    puts("got ER reply");
+    goto error;
+  }
+  //Pas sure que ce soit le meilleure solution, les erreures ne doivent pas toujours interrompre cassini
+  */
+
+
+//Si on lit autre chose que ce qui est autorisé: goto error
+// Case LIST
+  if (operation == CLIENT_REQUEST_LIST_TASKS ){
+    if (strcmp(*reply_buffer, "OK") == 0) {
+      printf ("0 TODO");
+      //TODO : Lire la suite pour tout afficher
+    }else{ //Le cas ER n'est pas a gerer car il n'est pas sensé exister
+      perror("liste");
+      goto error;
+    }
+  }
+  //Case CREATE
+  else if (operation == CLIENT_REQUEST_CREATE_TASK){
+    if (strcmp(*reply_buffer, "OK") == 0) {
+      printf ("0 TODO");
+      //TODO : Lire la suite et afficher le TASKID <uint64>
+    }else{ //Le cas ER n'est pas a gerer car il n'est pas sensé exister
+      perror("create");
+      goto error;
+    }
+  }
+  //Case REMOVE
+  else if (operation == CLIENT_REQUEST_REMOVE_TASK){
+    if (strcmp(*reply_buffer, "OK") == 0) {
+      printf ("0"); //Affiche 0 si reussite
+    }else if (strcmp(*reply_buffer, "ER") == 0) {
+      printf ("1"); 
+      //TODO: verifier que NF est le prochain truc a lire
+    } else{
+      perror("remove");
+      goto error;
+    }
+  }
+  //Case TIMES_EXITCODE
+  else if (operation == CLIENT_REQUEST_GET_TIMES_AND_EXITCODES){
+    if (strcmp(*reply_buffer, "OK") == 0) {
+      printf ("0 TODO"); 
+      //TODO : Afficher info (time + exit code) on all the past runs of a task
+    }else if (strcmp(*reply_buffer, "ER") == 0) {
+      printf ("1"); 
+      //TODO: verifier que NF est le prochain truc a lire. meme chose que remove
+    } else{
+      perror("times exitcode");
+      goto error;
+    }
+  }
+    //Case TERMINATE
+  else if (operation == CLIENT_REQUEST_TERMINATE){
+    if (strcmp(*reply_buffer, "OK") == 0) {
+      printf ("0");
+    } else{
+      perror("times exitcode");
+      goto error;
+    }
+  }
+  //Case STDOUT
+  else if (operation == CLIENT_REQUEST_GET_STDOUT || operation == CLIENT_REQUEST_GET_STDERR){
+    if (strcmp(*reply_buffer, "OK") == 0) {
+      printf ("0");
+      //TODO print la reponse 
+    }else if (strcmp(*reply_buffer, "ER") == 0) {
+      printf ("1"); 
+      //TODO: Deux erreures possibles, NF et NR
+    } else{
+      perror("times exitcode");
+      goto error;
+    }
+  }
+
+
+
+
+
+
+
+
+
+
   return EXIT_SUCCESS;
 
  error:
