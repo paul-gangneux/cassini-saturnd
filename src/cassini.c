@@ -55,7 +55,6 @@ int main(int argc, char * argv[]) {
   char * minutes_str = "*";
   char * hours_str = "*";
   char * daysofweek_str = "*";
-<<<<<<< src/cassini.c
   char * pipes_directory = NULL;
 
   // Getting username and setting pipes_directory to /tmp/username/saturnd/pipes
@@ -66,9 +65,6 @@ int main(int argc, char * argv[]) {
     sprintf(pipes_directory, "/tmp/%s/saturnd/pipes", username);
   }
 
-=======
-  char * pipes_directory = NULL; // TODO : valeur par défaut : /tmp/<USERNAME>/saturnd/pipes
->>>>>>> src/cassini.c
   
   uint16_t operation = CLIENT_REQUEST_LIST_TASKS;
   uint64_t taskid;
