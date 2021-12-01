@@ -323,16 +323,6 @@ int main(int argc, char * argv[]) {
       goto error;
     }
   }
-
-
-
-
-
-
-
-
-
-
   return EXIT_SUCCESS;
 
  error:
