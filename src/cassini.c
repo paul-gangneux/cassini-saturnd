@@ -234,7 +234,7 @@ int main(int argc, char * argv[]) {
   close(pipe_fd);
 
   //Ouvertrure du tube de reponse pour la lire
-  int reply_pipe = openPipe(1, pipes_directory);
+  int reply_pipe = openPipe(0, pipes_directory);
   if (reply_pipe < 0) {
     perror("open");
     goto error;
@@ -258,7 +258,7 @@ int main(int argc, char * argv[]) {
 // Case LIST
   if (operation == CLIENT_REQUEST_LIST_TASKS ){
     if (reply_buffer == SERVER_REPLY_OK) {
-      printf ("0 TODO");
+      printf ("");
       //TODO : Lire la suite pour tout afficher
     }else{ //Le cas ER n'est pas a gerer car il n'est pas sensé exister
       perror("liste");
@@ -268,10 +268,9 @@ int main(int argc, char * argv[]) {
   //Case CREATE
   else if (operation == CLIENT_REQUEST_CREATE_TASK){
     if (reply_buffer == SERVER_REPLY_OK)  {
-      printf ("0");
-      uint64_t* get_task_id = malloc (sizeof(uint64_t));
-      read(reply_pipe, get_task_id, sizeof(uint64_t));
-      printf("%"PRIu64"\n", *get_task_id);
+      uint64_t get_task_id;
+      read(reply_pipe, &get_task_id, sizeof(uint64_t));
+      printf("%"PRIu64"\n", get_task_id);
     }else{ //Le cas ER n'est pas a gerer car il n'est pas sensé exister
       perror("create");
       goto error;
@@ -283,9 +282,15 @@ int main(int argc, char * argv[]) {
       printf ("0"); //Affiche 0 si reussite
     }else if (reply_buffer == SERVER_REPLY_ERROR) {
       printf ("1"); 
-      
-      //TODO: verifier que NF est le prochain truc a lire
-    } else{
+      uint16_t get_error;
+      read(reply_pipe, &get_error, sizeof(uint16_t));
+      if (get_error == SERVER_REPLY_ERROR_NOT_FOUND){
+        printf ("Not Found");
+      }else{
+        perror("pas de nf dans rm");
+        goto error;
+      }
+    }else{
       perror("remove");
       goto error;
     }
@@ -297,7 +302,14 @@ int main(int argc, char * argv[]) {
       //TODO : Afficher info (time + exit code) on all the past runs of a task
     }else if (reply_buffer == SERVER_REPLY_ERROR) {
       printf ("1"); 
-      //TODO: verifier que NF est le prochain truc a lire. meme chose que remove
+      uint16_t get_error;
+      read(reply_pipe, &get_error, sizeof(uint16_t));
+      if (get_error == SERVER_REPLY_ERROR_NOT_FOUND){
+        printf ("Not Found");
+      }else{
+        perror("pas de nf dans rm");
+        goto error;
+      }
     } else{
       perror("times exitcode");
       goto error;
@@ -308,20 +320,34 @@ int main(int argc, char * argv[]) {
     if (reply_buffer == SERVER_REPLY_OK)  {
       printf ("0");
     } else{
-      perror("times exitcode");
+      perror("terminate");
       goto error;
     }
   }
-  //Case STDOUT
+  //Case STDOUT et STDIN
   else if (operation == CLIENT_REQUEST_GET_STDOUT || operation == CLIENT_REQUEST_GET_STDERR){
-    if (reply_buffer == SERVER_REPLY_OK)  {
-      printf ("0");
-      //TODO print la reponse 
+    if (reply_buffer == SERVER_REPLY_OK){
+      uint32_t length;
+      read(reply_pipe, &length, sizeof(uint32_t));
+      long taille= length;
+      char * toPrint = malloc (sizeof(char)*taille+1);
+      read(reply_pipe, toPrint, sizeof(char)*taille);
+      toPrint[taille]= '/0';
+      printf("%s", toPrint);
     }else if (reply_buffer == SERVER_REPLY_ERROR) {
       printf ("1"); 
-      //TODO: Deux erreures possibles, NF et NR
+      uint16_t get_error;
+      read(reply_pipe, &get_error, sizeof(uint16_t));
+      if (get_error == SERVER_REPLY_ERROR_NOT_FOUND){
+        printf ("Not Found");
+      }else if (get_error == SERVER_REPLY_ERROR_NEVER_RUN){
+        printf ("Never Run");
+      }else{
+        perror("pas de nf ou de nr dans STDOUT et STDIN");
+        goto error;
+      }
     } else{
-      perror("times exitcode");
+      perror("STDOUT et STDIN");
       goto error;
     }
   }
