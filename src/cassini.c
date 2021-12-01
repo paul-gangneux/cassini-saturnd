@@ -47,6 +47,35 @@ commandline* commandlineFromArgs(int argc, char * argv[]) {
   return cmdl;
 }
 
+//Ouvre le tube saturnd-request-pipe en ecriture si resquest==1 et le tube saturnd-reply-pipe sinon
+//renvoi -1 si erreure
+int openTube (int request, char * pipes_directory){
+  char* pipe_basename;
+  
+  if (strlen(pipes_directory)==0) return -1;
+  if (request==1){
+    if (pipes_directory[strlen(pipes_directory) - 1]=='/') pipe_basename = "saturnd-request-pipe";
+    else pipe_basename = "/saturnd-request-pipe";
+  }else{
+    if (pipes_directory[strlen(pipes_directory) - 1]=='/') pipe_basename = "saturnd-reply-pipe";
+    else pipe_basename = "/saturnd-reply-pipe";
+  }
+  
+  char* pipe_path = (char*)calloc(strlen(pipe_basename) + strlen(pipes_directory) + 1, sizeof(char));
+  memcpy(pipe_path, pipes_directory, strlen(pipes_directory));
+  strcat(pipe_path, pipe_basename);
+  int pipe_fd = -1;
+
+  // ouverture du tube
+  if (request==1){
+    pipe_fd = open(pipe_path, O_WRONLY);
+  }else{
+    pipe_fd = open(pipe_path, O_RDONLY);
+  }
+  free(pipe_path);
+  return pipe_fd;
+}
+
 int main(int argc, char * argv[]) {
   errno = 0;
   
@@ -177,6 +206,7 @@ int main(int argc, char * argv[]) {
   }
   
   // definition du chemin vers le tube
+  /*
   char* pipe_basename;
   
   if (strlen(pipes_directory)==0) goto error;
@@ -193,16 +223,23 @@ int main(int argc, char * argv[]) {
     perror("open");
     goto error;
   }
-
+*/
+  int pipe_fd = openTube(1, pipes_directory);
+  if (pipe_fd < 0) {
+    perror("open");
+    goto error;
+  }
   write(pipe_fd, buf, size); // écriture dans le tube
 
   // TODO : attendre la réponse du serveur
+
+  //Ouvertrure du tube de reponse pour la lire
+
   return EXIT_SUCCESS;
 
  error:
   if (errno != 0) perror("main");
   free(pipes_directory);
-  free(pipe_path);
   free(buf);
   close(pipe_fd);
   pipes_directory = NULL;
