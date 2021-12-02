@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <time.h>
 //#include <sys/types.h>
 #include <fcntl.h>
 #include <inttypes.h>
@@ -331,8 +332,28 @@ int main(int argc, char * argv[]) {
   //Case TIMES_EXITCODE
   else if (operation == CLIENT_REQUEST_GET_TIMES_AND_EXITCODES){
     if (reply_buffer == SERVER_REPLY_OK)  {
-      printf ("0 TODO"); 
-      //TODO : Afficher info (time + exit code) on all the past runs of a task
+      uint32_t nb_runs;
+      read(reply_pipe, &nb_runs, sizeof(nb_runs));
+      nb_runs = be32toh(nb_runs);
+
+      int64_t time_of_exec;
+      uint16_t exit_code;
+      char buf[20];
+      struct tm* tm;
+      for(uint32_t i = 0; i < nb_runs; i++) {
+	read(reply_pipe, &time_of_exec, sizeof(int64_t));
+	time_of_exec = be64toh(time_of_exec);
+	tm = localtime(&time_of_exec);
+
+	read(reply_pipe, &exit_code, sizeof(uint16_t));
+	exit_code = be16toh(exit_code);
+
+
+	strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", tm);
+	
+	printf("%s %d\n", buf, exit_code);
+      }
+
     }else if (reply_buffer == SERVER_REPLY_ERROR) {
       printf ("1"); 
       uint16_t get_error;
@@ -351,7 +372,7 @@ int main(int argc, char * argv[]) {
     //Case TERMINATE
   else if (operation == CLIENT_REQUEST_TERMINATE){
     if (reply_buffer == SERVER_REPLY_OK)  {
-      printf ("0");
+      return 0;
     } else{
       perror("terminate");
       goto error;
