@@ -243,14 +243,14 @@ int main(int argc, char *argv[]) {
     perror("open");
     goto error;
   }
-*/
-  int pipe_fd = openPipe(1, pipes_directory);
-  if (pipe_fd < 0) {
+  */
+  int request_pipe = openPipe(1, pipes_directory);
+  if (request_pipe < 0) {
     perror("open");
     goto error;
   }
-  write(pipe_fd, buf, size); // écriture dans le tube
-  close(pipe_fd);
+  write(request_pipe, buf, size); // écriture dans le tube
+  close(request_pipe);
 
   // Ouvertrure du tube de reponse pour la lire
   int reply_pipe = openPipe(0, pipes_directory);
@@ -315,31 +315,33 @@ int main(int argc, char *argv[]) {
       goto error;
     }
   }
+
   // Case CREATE
   else if (operation == CLIENT_REQUEST_CREATE_TASK) {
     if (reply_buffer == SERVER_REPLY_OK) {
       uint64_t get_task_id;
       read(reply_pipe, &get_task_id, sizeof(uint64_t));
       get_task_id = be64toh(get_task_id);
-
-      printf("%" PRIu64 "\n", get_task_id);
+      printf("%lu\n", get_task_id);
     } else { // Le cas ER n'est pas a gerer car il n'est pas sensé exister
       perror("create");
       goto error;
     }
   }
+
   // Case REMOVE
   else if (operation == CLIENT_REQUEST_REMOVE_TASK) {
     if (reply_buffer == SERVER_REPLY_OK) {
-      return 0; // Affiche 0 si reussite
+      // rien à faire
+
     } else if (reply_buffer == SERVER_REPLY_ERROR) {
-      printf("1");
+      printf("ERROR: ");
       uint16_t get_error;
       read(reply_pipe, &get_error, sizeof(uint16_t));
       if (get_error == SERVER_REPLY_ERROR_NOT_FOUND) {
-        printf("Not Found");
+        printf("task not found\n");
       } else {
-        perror("pas de nf dans rm");
+        perror("remove - wrong error type");
         goto error;
       }
     } else {
@@ -372,13 +374,13 @@ int main(int argc, char *argv[]) {
       }
 
     } else if (reply_buffer == SERVER_REPLY_ERROR) {
-      printf("1");
+      printf("ERROR: ");
       uint16_t get_error;
       read(reply_pipe, &get_error, sizeof(uint16_t));
       if (get_error == SERVER_REPLY_ERROR_NOT_FOUND) {
-        printf("Not Found");
+        printf("task not found\n");
       } else {
-        perror("pas de nf dans rm");
+        perror("times exitcode - wrong error type");
         goto error;
       }
     } else {
@@ -389,7 +391,7 @@ int main(int argc, char *argv[]) {
   // Case TERMINATE
   else if (operation == CLIENT_REQUEST_TERMINATE) {
     if (reply_buffer == SERVER_REPLY_OK) {
-      return 0;
+      // rien à faire
     } else {
       perror("terminate");
       goto error;
@@ -399,21 +401,26 @@ int main(int argc, char *argv[]) {
   else if (operation == CLIENT_REQUEST_GET_STDOUT ||
            operation == CLIENT_REQUEST_GET_STDERR) {
     if (reply_buffer == SERVER_REPLY_OK) {
+
       uint32_t length;
       read(reply_pipe, &length, sizeof(uint32_t));
-      long taille = length;
-      char *toPrint = malloc(sizeof(char) * taille + 1);
-      read(reply_pipe, toPrint, sizeof(char) * taille);
-      toPrint[taille] = '\0';
-      printf("%s", toPrint);
+      length = be32toh(length);
+      char *toPrint = malloc(sizeof(char) * length + 1);
+      read(reply_pipe, toPrint, sizeof(char) * length);
+      toPrint[length] = '\0';
+      printf("%s\n", toPrint);
+      free(toPrint);
+
     } else if (reply_buffer == SERVER_REPLY_ERROR) {
-      printf("1");
+
+      printf("ERROR: ");
       uint16_t get_error;
       read(reply_pipe, &get_error, sizeof(uint16_t));
+
       if (get_error == SERVER_REPLY_ERROR_NOT_FOUND) {
-        printf("Not Found");
+        printf("task not found\n");
       } else if (get_error == SERVER_REPLY_ERROR_NEVER_RUN) {
-        printf("Never Run");
+        printf("task never run\n");
       } else {
         perror("pas de nf ou de nr dans STDOUT et STDIN");
         goto error;
@@ -424,19 +431,18 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  // free (reply_buffer);
   free(pipes_directory);
   free(buf);
-  close(pipe_fd);
+  close(request_pipe);
   close(reply_pipe);
   return EXIT_SUCCESS;
 
 error:
   if (errno != 0)
-    perror("main");
+  perror("main");
   free(pipes_directory);
   free(buf);
-  close(pipe_fd);
+  close(request_pipe);
   close(reply_pipe);
   pipes_directory = NULL;
   return EXIT_FAILURE;
