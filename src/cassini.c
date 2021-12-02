@@ -244,23 +244,54 @@ int main(int argc, char * argv[]) {
   read(reply_pipe, &reply_buffer, sizeof(uint16_t)); // lecture dans le tube
   reply_buffer = be16toh(reply_buffer);
 
-  // RE because big endian, faster to compare this way
-  // FIXME this might segfault
-/*  if (strcmp(*reply_buffer, "RE") == 0) {
-    puts("got ER reply");
-    goto error;
-  }
-  //Pas sure que ce soit le meilleure solution, les erreures ne doivent pas toujours interrompre cassini
-  */
-
-
 //Si on lit autre chose que ce qui est autorisé: goto error
 // Case LIST
   if (operation == CLIENT_REQUEST_LIST_TASKS ){
     if (reply_buffer == SERVER_REPLY_OK) {
-      printf ("");
-      //TODO : Lire la suite pour tout afficher
-    }else{ //Le cas ER n'est pas a gerer car il n'est pas sensé exister
+      uint32_t nb_tasks;
+      read(reply_pipe, &nb_tasks, sizeof(uint32_t));
+      nb_tasks = be32toh(nb_tasks);
+
+      // timing
+      uint64_t taskid;
+      uint32_t cmdline_argc, str_size;
+      struct timing timing;
+      char timing_string[TIMING_TEXT_MIN_BUFFERSIZE];
+
+      // We have our tasks, let's grab and decode each
+      for (uint32_t i = 0; i < nb_tasks; i++) {
+	// TODO clean up that mess
+        read(reply_pipe, &taskid, sizeof(uint64_t));
+	taskid = be64toh(taskid);
+
+	// TODO print time
+	read(reply_pipe, &timing.minutes, sizeof(uint64_t));
+	timing.minutes = be64toh(timing.minutes);
+
+	read(reply_pipe, &timing.hours, sizeof(uint32_t));
+	timing.hours = be32toh(timing.hours);
+
+        read(reply_pipe, &timing.daysofweek, sizeof(uint8_t));
+
+	timing_string_from_timing(timing_string, &timing);
+
+	printf("%lu: %s ", taskid, timing_string); // 0: * * * echo test-1
+
+	read(reply_pipe, &cmdline_argc, sizeof(uint32_t));
+	cmdline_argc = be32toh(cmdline_argc);
+	for (uint32_t j = 0; j < cmdline_argc; j++) {
+		read(reply_pipe, &str_size, sizeof(str_size));
+		str_size = be32toh(str_size);
+
+		char b[str_size];
+		read(reply_pipe, &b, sizeof(char) * str_size);
+		b[str_size] = 0;
+
+		printf("%s ", b);
+	}
+	puts("");
+      }
+    }else{
       perror("liste");
       goto error;
     }
@@ -270,6 +301,8 @@ int main(int argc, char * argv[]) {
     if (reply_buffer == SERVER_REPLY_OK)  {
       uint64_t get_task_id;
       read(reply_pipe, &get_task_id, sizeof(uint64_t));
+      get_task_id = be64toh(get_task_id);
+
       printf("%"PRIu64"\n", get_task_id);
     }else{ //Le cas ER n'est pas a gerer car il n'est pas sensé exister
       perror("create");
@@ -279,7 +312,7 @@ int main(int argc, char * argv[]) {
   //Case REMOVE
   else if (operation == CLIENT_REQUEST_REMOVE_TASK){
     if (reply_buffer == SERVER_REPLY_OK)  {
-      printf ("0"); //Affiche 0 si reussite
+      return 0; //Affiche 0 si reussite
     }else if (reply_buffer == SERVER_REPLY_ERROR) {
       printf ("1"); 
       uint16_t get_error;
@@ -332,7 +365,7 @@ int main(int argc, char * argv[]) {
       long taille= length;
       char * toPrint = malloc (sizeof(char)*taille+1);
       read(reply_pipe, toPrint, sizeof(char)*taille);
-      toPrint[taille]= '/0';
+      toPrint[taille]= '\0';
       printf("%s", toPrint);
     }else if (reply_buffer == SERVER_REPLY_ERROR) {
       printf ("1"); 
