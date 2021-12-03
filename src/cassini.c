@@ -1,6 +1,8 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <time.h>
+#include <string.h>
+#include <stdlib.h>
 #include <unistd.h>
 //#include <sys/types.h>
 #include <fcntl.h>
@@ -90,11 +92,18 @@ int openPipe(int request, char *pipes_directory) {
 int main(int argc, char *argv[]) {
   errno = 0;
 
-  char *minutes_str = "*";
-  char *hours_str = "*";
-  char *daysofweek_str = "*";
-  char *pipes_directory =
-      NULL; // TODO : valeur par défaut : /tmp/<USERNAME>/saturnd/pipes
+  char * minutes_str = "*";
+  char * hours_str = "*";
+  char * daysofweek_str = "*";
+  char * pipes_directory = NULL;
+
+  // Getting username and setting pipes_directory to /tmp/username/saturnd/pipes
+  char *username = getenv("USER");
+  if (username != NULL) {
+    int u = strlen(username);
+    pipes_directory = malloc(19 + u);
+    sprintf(pipes_directory, "/tmp/%s/saturnd/pipes", username);
+  }
 
   uint16_t operation = CLIENT_REQUEST_LIST_TASKS;
   uint64_t taskid;
