@@ -9,5 +9,4 @@
 
 #include "client-request.h"
 #include "server-reply.h"
-
 #endif // CASSINI

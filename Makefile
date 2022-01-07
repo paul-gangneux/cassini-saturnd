@@ -7,7 +7,7 @@ SRC_PATH = ./src
 headers = $(HEADERS_PATH)/custom-string.h $(HEADERS_PATH)/client-request.h
 
 .PHONY: all
-all: cassini
+all: cassini saturnd
 
 .PHONY: distclean
 distclean:
@@ -15,6 +15,9 @@ distclean:
 
 cassini: src/cassini.c $(headers) $(SRC_PATH)/custom-string.c
 	$(CC) $(OPTS) -I$(HEADERS_PATH) $(SRC_PATH)/timing-text-io.c $(SRC_PATH)/custom-string.c $(SRC_PATH)/cassini.c -o cassini
+
+saturnd: distclean
+	$(CC) $(OPTS) -I$(HEADERS_PATH) $(SRC_PATH)/saturnd.c -o saturnd
 
 .PHONY: test
 test: cassini
