@@ -31,6 +31,10 @@ test: cassini
 killtests:
 	killall -v run-cassini-tests.sh*
 
+.PHONY: killsaturnd
+killtests:
+	killall -v saturnd
+
 .PHONY: test2
 test2: cassini
 	 ./cassini -p ./run/pipes -c echo hello
