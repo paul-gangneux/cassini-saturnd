@@ -323,7 +323,7 @@ int main(int argc, char *argv[]) {
         puts("");
       }
     } else {
-      perror("liste");
+      printf("Error: saturnd's answer doesn't make sense\n");
       goto error;
     }
   }
@@ -336,7 +336,7 @@ int main(int argc, char *argv[]) {
       get_task_id = be64toh(get_task_id);
       printf("%lu\n", get_task_id);
     } else { // Le cas ER n'est pas a gerer car il n'est pas sensé exister
-      perror("create");
+      printf("Error: saturnd's answer doesn't make sense\n");
       goto error;
     }
   }
@@ -357,7 +357,7 @@ int main(int argc, char *argv[]) {
         goto error;
       }
     } else {
-      perror("remove");
+      printf("Error: saturnd's answer doesn't make sense\n");
       goto error;
     }
   }
@@ -396,7 +396,7 @@ int main(int argc, char *argv[]) {
         goto error;
       }
     } else {
-      perror("times exitcode");
+      printf("Error: saturnd's answer doesn't make sense\n");
       goto error;
     }
   }
@@ -405,7 +405,7 @@ int main(int argc, char *argv[]) {
     if (reply_buffer == SERVER_REPLY_OK) {
       // rien à faire
     } else {
-      perror("terminate");
+      printf("Error: saturnd's answer doesn't make sense\n");
       goto error;
     }
   }
@@ -438,7 +438,7 @@ int main(int argc, char *argv[]) {
         goto error;
       }
     } else {
-      perror("STDOUT et STDIN");
+      printf("Error: saturnd's answer doesn't make sense\n");
       goto error;
     }
   }
