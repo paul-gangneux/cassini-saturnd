@@ -7,22 +7,22 @@
 #include "saturnd.h"
 
 int main() {
-  // TODO parsing arguments
-  char* request_tube_path = "/tmp/m242/saturnd/pipes/saturnd-request-pipe";
-  char* answer_tube_path = "/tmp/m242/saturnd/pipes/saturnd-reply-pipe";
+	// TODO parsing arguments
+	char* request_tube_path = "/tmp/saturnd-request-pipe";
+	char* answer_tube_path = "/tmp/saturnd-reply-pipe";
 
-  // La boucle principale est dans un double fork, et est ainsi adoptee
-  // par init lors de la fin du processus principal
-  if (fork() == 0) {
-    if(fork() == 0) {
-      saturnd_loop(request_tube_path, answer_tube_path);
-    }
-  }
+	// La boucle principale est dans un double fork, et est ainsi adoptee
+	// par init lors de la fin du processus principal
+	if (fork() == 0) {
+		if(fork() == 0) {
+			saturnd_loop(request_tube_path, answer_tube_path);
+		}
+	}
 }
 
 void saturnd_loop(char* rtp, char* atp) {
-	int request_pipe = open(rtp, O_RDONLY | O_CREAT, S_IRWXU);
-	int answer_pipe = open(atp, O_WRONLY | O_CREAT, S_IRWXU);
+	int request_pipe = open(rtp, O_RDONLY | O_CREAT | O_TRUNC, S_IRWXU);
+	int answer_pipe = open(atp, O_WRONLY | O_CREAT | O_TRUNC, S_IRWXU);
 
 	task* tasklist; // TODO lire les taches existantes
 	// TODO liste chainee plus adaptee pour liste des taches ?
@@ -34,6 +34,7 @@ void saturnd_loop(char* rtp, char* atp) {
 
 		// TODO gestion de toutes les requetes
 		read(request_pipe, &opcode, sizeof(uint16_t));
+		opcode = be16toh(opcode);
 
 		if (opcode == CLIENT_REQUEST_LIST_TASKS) {}
 		if (opcode == CLIENT_REQUEST_CREATE_TASK) {}
@@ -42,11 +43,12 @@ void saturnd_loop(char* rtp, char* atp) {
 
 		if (opcode == CLIENT_REQUEST_TERMINATE) {
 			close(request_pipe);
-			// TODO answer
+			write(answer_pipe, htobe16(SERVER_REPLY_OK), sizeof(uint16_t));
 			close(answer_pipe);
+
 			// TODO rm every task folder
 			// TODO free tasklist
-			printf("tada");
+			printf("Exiting");
 			exit(0);
 		}
 
