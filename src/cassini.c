@@ -105,7 +105,7 @@ int main(int argc, char *argv[]) {
   char *username = getenv("USER");
   if (username != NULL) {
     int u = strlen(username);
-    pipes_directory = malloc(19 + u);
+    pipes_directory = calloc(20 + u, 1);
     sprintf(pipes_directory, "/tmp/%s/saturnd/pipes", username);
   }
 
@@ -450,8 +450,7 @@ int main(int argc, char *argv[]) {
   return EXIT_SUCCESS;
 
 error:
-  if (errno != 0)
-  perror("main");
+  printf("cassini ended on an error\n");
   free(pipes_directory);
   free(buf);
   close(request_pipe);
