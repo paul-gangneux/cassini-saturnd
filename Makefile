@@ -32,7 +32,7 @@ killtests:
 	killall -v run-cassini-tests.sh*
 
 .PHONY: killsaturnd
-killtests:
+killsaturnd:
 	killall -v saturnd
 
 .PHONY: test2
