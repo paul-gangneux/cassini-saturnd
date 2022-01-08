@@ -237,25 +237,6 @@ int main(int argc, char *argv[]) {
     memcpy(buf, &req, sizeof(req));
   }
 
-  // definition du chemin vers le tube
-  /*
-  char* pipe_basename;
-
-  if (strlen(pipes_directory)==0) goto error;
-  if (pipes_directory[strlen(pipes_directory) - 1]=='/') pipe_basename =
-  "saturnd-request-pipe"; else pipe_basename = "/saturnd-request-pipe";
-
-  char* pipe_path = (char*)calloc(strlen(pipe_basename) +
-  strlen(pipes_directory) + 1, sizeof(char)); memcpy(pipe_path, pipes_directory,
-  strlen(pipes_directory)); strcat(pipe_path, pipe_basename);
-
-  // ouverture du tube
-  int pipe_fd = open(pipe_path, O_WRONLY);
-  if (pipe_fd < 0) {
-    perror("open");
-    goto error;
-  }
-  */
   request_pipe = openPipe(1, pipes_directory);
   if (request_pipe < 0) {
     perror("open");
@@ -353,7 +334,7 @@ int main(int argc, char *argv[]) {
       if (get_error == SERVER_REPLY_ERROR_NOT_FOUND) {
         printf("task not found\n");
       } else {
-        perror("remove - wrong error type");
+        printf("remove - wrong error type\n");
         goto error;
       }
     } else {
@@ -392,7 +373,7 @@ int main(int argc, char *argv[]) {
       if (get_error == SERVER_REPLY_ERROR_NOT_FOUND) {
         printf("task not found\n");
       } else {
-        perror("times exitcode - wrong error type");
+        printf("times exitcode - wrong error type\n");
         goto error;
       }
     } else {
@@ -434,7 +415,7 @@ int main(int argc, char *argv[]) {
       } else if (get_error == SERVER_REPLY_ERROR_NEVER_RUN) {
         printf("task never run\n");
       } else {
-        perror("pas de nf ou de nr dans STDOUT et STDIN");
+        printf("stdout / stdin - wrong error type\n");
         goto error;
       }
     } else {
