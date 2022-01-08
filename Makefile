@@ -39,8 +39,8 @@ killsaturnd:
 test2: cassini
 	 ./cassini -p ./run/pipes -c echo hello
 
-cassini-debug: src/cassini.c $(headers) $(SRC_PATH)/custom-string.c
-	$(CC) -g $(OPTS) -I$(HEADERS_PATH) $(SRC_PATH)/timing-text-io.c $(SRC_PATH)/custom-string.c $(SRC_PATH)/cassini.c -o cassini-debug
+cassini-debug: $(cassini_headers) $(cassini_source)
+	$(CC) -g $(OPTS) -I$(HEADERS_PATH) $(cassini_source) -o cassini-debug
 
 debug: cassini-debug
 	gdb ./cassini-debug -p ./run/pipes -c echo hello
