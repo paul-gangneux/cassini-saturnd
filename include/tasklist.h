@@ -15,8 +15,6 @@ typedef struct task task;
 
 typedef struct {
 	task* first;
-} tasklist;
-
-
+} tasklist; 
 
 #endif

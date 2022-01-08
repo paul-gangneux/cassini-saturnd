@@ -14,10 +14,10 @@ distclean:
 	rm -rf run/ build/ cassini saturnd cassini-debug -v
 
 cassini: src/cassini.c $(headers) $(SRC_PATH)/custom-string.c
-	$(CC) $(OPTS) -I$(HEADERS_PATH) $(SRC_PATH)/timing-text-io.c $(SRC_PATH)/custom-string.c $(SRC_PATH)/cassini.c -o cassini
+	$(CC) $(OPTS) -I$(HEADERS_PATH) $(SRC_PATH)/timing-text-io.c $(SRC_PATH)/custom-string.c $(SRC_PATH)/client-request.c $(SRC_PATH)/cassini.c -o cassini
 
 saturnd: distclean
-	$(CC) $(OPTS) -I$(HEADERS_PATH) $(SRC_PATH)/saturnd.c $(SRC_PATH)/tasklist.c -o saturnd
+	$(CC) $(OPTS) -I$(HEADERS_PATH) $(SRC_PATH)/saturnd.c $(SRC_PATH)/tasklist.c  $(SRC_PATH)/client-request.c $(SRC_PATH)/custom-string.c -o saturnd
 
 .PHONY: test
 test: cassini
