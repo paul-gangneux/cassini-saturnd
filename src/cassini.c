@@ -97,6 +97,10 @@ int main(int argc, char *argv[]) {
   char * daysofweek_str = "*";
   char * pipes_directory = NULL;
 
+  char *buf = NULL;
+  int request_pipe = -1;
+  int reply_pipe = -1;
+
   // Getting username and setting pipes_directory to /tmp/username/saturnd/pipes
   char *username = getenv("USER");
   if (username != NULL) {
@@ -172,7 +176,6 @@ int main(int argc, char *argv[]) {
     goto error;
 
   int size;
-  char *buf;
 
   // décide quoi envoyer au serveur en fonction de opcode
   // cas création d'une tache
@@ -253,7 +256,7 @@ int main(int argc, char *argv[]) {
     goto error;
   }
   */
-  int request_pipe = openPipe(1, pipes_directory);
+  request_pipe = openPipe(1, pipes_directory);
   if (request_pipe < 0) {
     perror("open");
     goto error;
@@ -262,7 +265,7 @@ int main(int argc, char *argv[]) {
   close(request_pipe);
 
   // Ouvertrure du tube de reponse pour la lire
-  int reply_pipe = openPipe(0, pipes_directory);
+  reply_pipe = openPipe(0, pipes_directory);
   if (reply_pipe < 0) {
     perror("open");
     goto error;
