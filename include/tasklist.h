@@ -1,6 +1,8 @@
 #ifndef TASKLIST_H
 #define TASKLIST_H
 
+#include <time.h>
+
 #include "client-request.h"
 
 struct task {
@@ -15,6 +17,9 @@ typedef struct task task;
 
 typedef struct {
 	task* first;
-} tasklist; 
+} tasklist;
+
+void iter_tasklist(void (*operation)(task*, void*), tasklist* tl);
+void execute_task_if_needed(task *, void*);
 
 #endif
