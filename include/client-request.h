@@ -46,12 +46,6 @@ typedef struct {
   char taskid[8];
 } cli_request_task_chars;
 
-void commandline_free(commandline *cmdl) {
-  for (uint32_t i = 0; i < cmdl->ARGC; i++) {
-    string_free(cmdl->ARGVs[i]);
-  }
-  free(cmdl->ARGVs);
-  free(cmdl);
-}
+void commandline_free(commandline *cmdl);
 
 #endif // CLIENT_REQUEST_H
