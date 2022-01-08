@@ -12,11 +12,7 @@
 
 //#include "client-request.h" FIXME bug bizarre de link avec string_free
 #include "server-reply.h"
-
-typedef struct {
-	// TODO precision d'une tache
-	char* id;
-} task;
+#include "tasklist.h"
 
 void saturnd_loop(char*, char*);
 
