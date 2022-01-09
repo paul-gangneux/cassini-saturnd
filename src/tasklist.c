@@ -22,7 +22,7 @@ void delete_files(uint64_t id, const char *path) {
 	char *dir = malloc(strlen(path) + 16);
 	char *buf = malloc(strlen(path) + 64);
 
-	sprintf(dir, "%s/%ld", path, id);
+	sprintf(dir, "%s/%lu", path, id);
 	sprintf(buf, "%s/%s", dir, "command_line");
 	unlink(buf);
 	sprintf(buf, "%s/%s", dir, "timing");
@@ -177,7 +177,7 @@ void task_createFiles(task *task, const char *path) {
 	char *dir = malloc(strlen(path) + 16);
 	char *buf = malloc(strlen(path) + 64);
 
-	sprintf(dir, "%s/%ld", path, task->id);
+	sprintf(dir, "%s/%lu", path, task->id);
 	mkdir(dir, 0777);
 
 	sprintf(buf, "%s/%s", dir, "command_line");

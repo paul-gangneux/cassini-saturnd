@@ -32,4 +32,7 @@ void string_free(string_p s);
 void string_print(string_p s);
 void string_println(string_p s);
 
+// return NULL if file not found
+string_p string_readFromFile(const char* path);
+
 #endif
