@@ -55,11 +55,11 @@ int main() {
 
 	// La boucle principale est dans un double fork, et est ainsi adoptee
 	// par init lors de la fin du processus principal
-	if (fork() == 0) {
-		if(fork() == 0) {
+	//if (fork() == 0) {
+	//	if(fork() == 0) {
 			saturnd_loop(req_pipe_path, ans_pipe_path, tasks_directory);
-		}
-	}
+	//	}
+	//}
 
 }
 
