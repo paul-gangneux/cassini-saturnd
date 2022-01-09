@@ -15,6 +15,14 @@ string_p string_create(const char *charArray) {
   return str;
 }
 
+string_p string_createln(const void *buf, int length) {
+  string_p str = (string_p)malloc(sizeof(string));
+  str->length = length;
+  str->chars = (char *)malloc(length);
+  memcpy(str->chars, buf, length);
+  return str;
+}
+
 // concatène plein de strings en une string
 // la longueur des strings est écrit dans le
 // string retourné
@@ -43,6 +51,19 @@ string_p string_concatStringsKeepLength(string_p *strArray, int nb) {
   return s;
 }
 
+void string_concat(string_p s1, string_p s2) {
+  char *tmp = s1->chars;
+  int oldlen = s1->length;
+
+  s1->length = s1->length + s2->length;
+  s1->chars = malloc(s1->length);
+
+  memmove(s1->chars, tmp, oldlen);
+  memmove(s1->chars + oldlen, s2->chars, s2->length);
+
+  free(tmp);
+}
+
 void string_free(string_p s) {
   free(s->chars);
   free(s);
@@ -54,3 +75,22 @@ void string_println(string_p s) {
   string_print(s);
   write(STDOUT_FILENO, "\n", 1);
 }
+
+/*
+void string_trimStart(string_p s, int n) {
+  if (n <= 0) return;
+  if (s->length - n < 1) {
+    free(s->chars);
+    s->chars = malloc(0);
+    s->length = 0;
+  } 
+  else {
+    char *tmp = s->chars;
+
+    s->chars = malloc(s->length - n);
+    s->length = s->length - n;
+    memmove(s, tmp + n, s->length);
+    free(tmp);
+  }
+}
+*/

@@ -14,6 +14,6 @@
 #include "server-reply.h"
 #include "tasklist.h"
 
-void saturnd_loop(char*, char*);
+void saturnd_loop(char*, char*, char*);
 
 #endif

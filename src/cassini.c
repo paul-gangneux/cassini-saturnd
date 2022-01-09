@@ -105,7 +105,7 @@ int main(int argc, char *argv[]) {
   char *username = getenv("USER");
   if (username != NULL) {
     int u = strlen(username);
-    pipes_directory = malloc(19 + u);
+    pipes_directory = calloc(20 + u, 1);
     sprintf(pipes_directory, "/tmp/%s/saturnd/pipes", username);
   }
 
@@ -237,25 +237,6 @@ int main(int argc, char *argv[]) {
     memcpy(buf, &req, sizeof(req));
   }
 
-  // definition du chemin vers le tube
-  /*
-  char* pipe_basename;
-
-  if (strlen(pipes_directory)==0) goto error;
-  if (pipes_directory[strlen(pipes_directory) - 1]=='/') pipe_basename =
-  "saturnd-request-pipe"; else pipe_basename = "/saturnd-request-pipe";
-
-  char* pipe_path = (char*)calloc(strlen(pipe_basename) +
-  strlen(pipes_directory) + 1, sizeof(char)); memcpy(pipe_path, pipes_directory,
-  strlen(pipes_directory)); strcat(pipe_path, pipe_basename);
-
-  // ouverture du tube
-  int pipe_fd = open(pipe_path, O_WRONLY);
-  if (pipe_fd < 0) {
-    perror("open");
-    goto error;
-  }
-  */
   request_pipe = openPipe(1, pipes_directory);
   if (request_pipe < 0) {
     perror("open");
@@ -323,7 +304,7 @@ int main(int argc, char *argv[]) {
         puts("");
       }
     } else {
-      perror("liste");
+      printf("Error: saturnd's answer doesn't make sense\n");
       goto error;
     }
   }
@@ -336,7 +317,7 @@ int main(int argc, char *argv[]) {
       get_task_id = be64toh(get_task_id);
       printf("%lu\n", get_task_id);
     } else { // Le cas ER n'est pas a gerer car il n'est pas sensé exister
-      perror("create");
+      printf("Error: saturnd's answer doesn't make sense\n");
       goto error;
     }
   }
@@ -350,14 +331,15 @@ int main(int argc, char *argv[]) {
       printf("ERROR: ");
       uint16_t get_error;
       read(reply_pipe, &get_error, sizeof(uint16_t));
+      get_error = be16toh(get_error);
       if (get_error == SERVER_REPLY_ERROR_NOT_FOUND) {
         printf("task not found\n");
       } else {
-        perror("remove - wrong error type");
+        printf("remove - wrong error type\n");
         goto error;
       }
     } else {
-      perror("remove");
+      printf("Error: saturnd's answer doesn't make sense\n");
       goto error;
     }
   }
@@ -389,14 +371,15 @@ int main(int argc, char *argv[]) {
       printf("ERROR: ");
       uint16_t get_error;
       read(reply_pipe, &get_error, sizeof(uint16_t));
+      get_error = be16toh(get_error);
       if (get_error == SERVER_REPLY_ERROR_NOT_FOUND) {
         printf("task not found\n");
       } else {
-        perror("times exitcode - wrong error type");
+        printf("times exitcode - wrong error type\n");
         goto error;
       }
     } else {
-      perror("times exitcode");
+      printf("Error: saturnd's answer doesn't make sense\n");
       goto error;
     }
   }
@@ -405,7 +388,7 @@ int main(int argc, char *argv[]) {
     if (reply_buffer == SERVER_REPLY_OK) {
       // rien à faire
     } else {
-      perror("terminate");
+      printf("Error: saturnd's answer doesn't make sense\n");
       goto error;
     }
   }
@@ -428,17 +411,18 @@ int main(int argc, char *argv[]) {
       printf("ERROR: ");
       uint16_t get_error;
       read(reply_pipe, &get_error, sizeof(uint16_t));
-
+      get_error = be16toh(get_error);
+      
       if (get_error == SERVER_REPLY_ERROR_NOT_FOUND) {
         printf("task not found\n");
       } else if (get_error == SERVER_REPLY_ERROR_NEVER_RUN) {
         printf("task never run\n");
       } else {
-        perror("pas de nf ou de nr dans STDOUT et STDIN");
+        printf("stdout / stdin - wrong error type\n");
         goto error;
       }
     } else {
-      perror("STDOUT et STDIN");
+      printf("Error: saturnd's answer doesn't make sense\n");
       goto error;
     }
   }
@@ -450,8 +434,7 @@ int main(int argc, char *argv[]) {
   return EXIT_SUCCESS;
 
 error:
-  if (errno != 0)
-  perror("main");
+  printf("cassini ended on an error\n");
   free(pipes_directory);
   free(buf);
   close(request_pipe);
