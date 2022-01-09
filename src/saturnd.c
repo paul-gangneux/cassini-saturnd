@@ -115,10 +115,10 @@ void saturnd_loop(char* request_pipe_path, char* answer_pipe_path, char* tasks_d
 	pfd.events = POLLIN;
 
 	while(1) {
-		// TODO execution des taches
+		tasklist_execute(tasklist, tasks_dir);
 
-		// on attend une requete pendant 500ms
-		poll(&pfd, 1, 500);
+		// on attend une requete pendant 1s
+		poll(&pfd, 1, 1000);
 		
 		// on ne lis et répond à la requête que s'il y en a effectivement une
 		if (pfd.revents & POLLIN) {
@@ -151,17 +151,17 @@ void saturnd_loop(char* request_pipe_path, char* answer_pipe_path, char* tasks_d
 					
 				case CLIENT_REQUEST_CREATE_TASK: {
 					
-					timing time;
+					timing *time = malloc(sizeof(timing));
 					uint32_t argc;
 					commandline* cmdl = malloc(sizeof(commandline));
 
-					read(request_pipe, &time.minutes, sizeof(uint64_t));
-					read(request_pipe, &time.hours, sizeof(uint32_t));
-					read(request_pipe, &time.daysofweek, sizeof(uint8_t));
+					read(request_pipe, &time->minutes, sizeof(uint64_t));
+					read(request_pipe, &time->hours, sizeof(uint32_t));
+					read(request_pipe, &time->daysofweek, sizeof(uint8_t));
 					read(request_pipe, &argc, sizeof(uint32_t));
 
-					time.minutes = be64toh(time.minutes);
-					time.hours = be32toh(time.hours);
+					time->minutes = be64toh(time->minutes);
+					time->hours = be32toh(time->hours);
 					argc = be32toh(argc);
 
 					cmdl->ARGC = argc;
