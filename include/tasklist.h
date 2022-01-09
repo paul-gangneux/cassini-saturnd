@@ -4,6 +4,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/wait.h>
+#include <time.h>
 
 #include "client-request.h"
 #include "custom-string.h"
@@ -12,6 +13,7 @@ typedef struct task task;
 struct task {
 	// TODO precision d'une tache
 	pid_t pid_of_exec;
+	time_t exec_time;
 	uint64_t id;
 	commandline *cmdl;
 	timing timing;

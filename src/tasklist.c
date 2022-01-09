@@ -169,6 +169,7 @@ void task_execute(task *t, char *tasks_dir) {
 		execvp(args[0], args+1);
 	} else {
 		t->pid_of_exec = p;
+		t->exec_time = time(0);
 	}
 }
 
@@ -186,6 +187,7 @@ void execute_tasklist(tasklist *tl, char *tasks_dir) {
 			waitpid(t->pid_of_exec, status, WNOHANG);
 
 			int b = open(return_values_fp, O_APPEND | O_CREAT, S_IRWXU);
+			write(b, t->exec_time, sizeof(time_t));
 			write(b, status, sizeof(status));
 			close(b);
 
