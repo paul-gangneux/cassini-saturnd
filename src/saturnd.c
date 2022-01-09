@@ -91,8 +91,8 @@ void saturnd_loop(char* request_pipe_path, char* answer_pipe_path, char* tasks_d
 	while(1) {
 		tasklist_execute(tasklist, tasks_dir);
 
-		// on attend une requete pendant 500ms
-		poll(&pfd, 1, 500);
+		// on attend une requete pendant 1s
+		poll(&pfd, 1, 1000);
 		
 		// on ne lis et répond à la requête que s'il y en a effectivement une
 		if (pfd.revents & POLLIN) {

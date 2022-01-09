@@ -190,17 +190,20 @@ void task_execute(task *t, char *tasks_dir) {
 	pid_t p = fork();
 	if (p == 0) {
 		int std_out = open(std_out_fp, O_RDWR | O_APPEND | O_CREAT, S_IRUSR | S_IWUSR);
-		dup2(std_out, 2);
+		dup2(std_out, 1);
 
 		int std_err = open(std_err_fp, O_RDWR | O_APPEND | O_CREAT, S_IRUSR | S_IWUSR);
 		dup2(std_err, 2);
 
-		char* args[t->cmdl->ARGC];
+		char* args[t->cmdl->ARGC+1];
 		for (uint32_t i = 0; i < t->cmdl->ARGC; i++) {
+			string_addChar(t->cmdl->ARGVs[i], '\0');
 			args[i] = t->cmdl->ARGVs[i]->chars;
 		}
 
-		execvp(args[0], args+1);
+		args[t->cmdl->ARGC] = NULL;
+
+		execvp(args[0], args);
 		exit(1);
 
 	} else {
