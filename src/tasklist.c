@@ -2,6 +2,7 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include <dirent.h>
+#include <sys/wait.h>
 #include "tasklist.h"
 #include "timing.h"
 #include "timing-text-io.h"
@@ -80,13 +81,14 @@ void tasklist_iter(void (*operation)(task *), tasklist *tl) {
 
 // alloue la mémoire necessaire à la création de la tache
 // et renvoie un pointeur vers cette tache
-// on suppose que la mémoire de cmdl a déjà été allouée (mauvaise idée ?)
-task *task_create(uint16_t id, commandline *cmdl, timing timing) {
+// on suppose que la mémoire de cmdl et timing ont déjà été allouées
+task *task_create(uint16_t id, commandline *cmdl, timing *timing) {
 	task *task_p = malloc(sizeof(task));
 	task_p->id = id;
 	task_p->cmdl = cmdl;
 	task_p->timing = timing;
 	task_p->next = NULL;
+	task_p->exec_time = 0;
 	task_p->pid_of_exec = -1;
 	return task_p;
 }
@@ -111,6 +113,7 @@ int tasklist_length(tasklist *tl) {
 // free une tache seule, ne free pas t->next
 void task_free(task *t) {
 	commandline_free(t->cmdl);
+	free(t->timing);
 	free(t);
 }
 
@@ -132,9 +135,9 @@ string_p task_toString(task *t) {
 
 	// conversion en big-endian ici
 	uint64_t taskid = htobe64(t->id);
-	uint64_t minutes = htobe64(t->timing.minutes);
-	uint32_t hours = htobe32(t->timing.hours);
-	uint8_t daysofweek = t->timing.daysofweek;
+	uint64_t minutes = htobe64(t->timing->minutes);
+	uint32_t hours = htobe32(t->timing->hours);
+	uint8_t daysofweek = t->timing->daysofweek;
 	uint32_t cmd_argc = htobe32(t->cmdl->ARGC);
 
 	string_p s = string_create("");
@@ -221,14 +224,19 @@ void tasklist_execute(tasklist *tl, char *tasks_dir) {
 		char return_values_fp[strlen(specific_dir) + 14];
 		sprintf(return_values_fp, "%s%s", specific_dir, "return_values");
 		
-		int status = -1;
+		int status = 0;
 		if (t->pid_of_exec > 0) {
 			waitpid(t->pid_of_exec, &status, WNOHANG);
 
-			if (status != -1) {
-				int b = open(return_values_fp, O_APPEND | O_CREAT, S_IRWXU);
+			if (status!=-1) {
+				uint16_t st;
+				if (WIFEXITED(status)) st = WEXITSTATUS(status);
+				else st = 0xFFFF;
+				int b = open(return_values_fp, O_APPEND);
+				
+				// ne fonctionne toujours pas =.=
 				write(b, &t->exec_time, sizeof(time_t));
-				write(b, &status, sizeof(status));
+				write(b, &st, sizeof(uint16_t));
 				close(b);
 
 				t->pid_of_exec = -1;
@@ -292,10 +300,10 @@ task* task_fromDirectory(const char* path, const char* dir_basename) {
 	int tim_id = open(buf, O_RDONLY);
 
 	char *buf_cmdl = calloc(2048, 1);
-	timing t;
+	timing *t = malloc(sizeof(timing));
 
 	read(cmd_id, buf_cmdl, 2048);
-	read(tim_id, &t, sizeof(timing));
+	read(tim_id, t, sizeof(timing));
 
 	commandline *cmld = commandline_charsToCommandline(buf_cmdl);
 
