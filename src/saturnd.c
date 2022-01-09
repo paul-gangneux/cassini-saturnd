@@ -226,10 +226,11 @@ void saturnd_loop(char* request_pipe_path, char* answer_pipe_path, char* tasks_d
 					/* code */
 					break;
 				}
-				default:
+				default: {
 					uint16_t rep = htobe16(SERVER_REPLY_ERROR);
 					write(answer_pipe, &rep, sizeof(uint16_t));
 					break;
+				}
 			}
 
 			close(answer_pipe);
