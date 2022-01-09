@@ -1,7 +1,7 @@
 #include "tasklist.h"
 
 // ajoute une tache en début de liste
-void task_addToTasklist(task *t, tasklist *tl) {
+void tasklist_addTask(tasklist *tl, task *t) {
 	t->next = tl->first;
 	tl->first = t;
 }

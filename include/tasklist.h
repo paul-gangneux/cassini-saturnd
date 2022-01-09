@@ -2,11 +2,12 @@
 #define TASKLIST_H
 
 #include "client-request.h"
+#include "custom-string.h"
 
 typedef struct task task;
 struct task {
 	// TODO precision d'une tache
-	uint16_t id;
+	uint64_t id;
 	commandline *cmdl;
 	timing timing;
 
@@ -17,7 +18,7 @@ typedef struct {
 	task *first;
 } tasklist;
 
-void task_addToTasklist(task *t, tasklist *tl);
+void tasklist_addTask(tasklist *tl, task *t);
 void iter_tasklist(void (*operation)(task *), tasklist *tl);
 task *task_create(uint16_t id, commandline *cmdl, timing timing);
 void task_free(task *t);

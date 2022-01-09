@@ -72,7 +72,7 @@ void saturnd_loop(char* request_pipe_path, char* answer_pipe_path, char* tasks_d
 	if (request_pipe < 0) perror("open request pipe");
 
 	// définit l'id des nouvelles taches. n'est jamais décrémenté, même quand une tache est supprimée
-	uint32_t taskNb = 0;
+	uint64_t taskNb = 0;
 
 	tasklist* tasklist = tasklist_create(); 
 	// TODO lire les taches existantes (et adapter taskNb en conséquence)
@@ -102,18 +102,74 @@ void saturnd_loop(char* request_pipe_path, char* answer_pipe_path, char* tasks_d
 
 			switch (opcode) {
 				case CLIENT_REQUEST_LIST_TASKS: {
-					uint32_t nbTasks = tasklist_length(tasklist);
 					uint16_t rep = htobe16(SERVER_REPLY_OK);
-					nbTasks = htobe32(nbTasks);
-					write(answer_pipe, &rep, sizeof(uint16_t));
-					write(answer_pipe, &nbTasks, sizeof(uint32_t));
+					uint32_t nbTasks = htobe32(tasklist_length(tasklist));
 
-					/* code */
+					string_p ans = string_createln(&rep, sizeof(rep));
+					string_p s1 = string_createln(&nbTasks, sizeof(nbTasks));
+					string_p s2 = tasklist_toString(tasklist);
+
+					string_concat(ans, s1);
+					string_concat(ans, s2);
+
+					write(answer_pipe, ans->chars, ans->length);
+
+					string_free(ans);
+					string_free(s1);
+					string_free(s2);
 					break;
 				}
 					
 				case CLIENT_REQUEST_CREATE_TASK: {
-					/* code */
+					
+					timing time;
+					uint32_t argc;
+					commandline* cmdl = malloc(sizeof(commandline));
+
+					read(request_pipe, &time.minutes, sizeof(uint64_t));
+					read(request_pipe, &time.hours, sizeof(uint32_t));
+					read(request_pipe, &time.daysofweek, sizeof(uint8_t));
+					read(request_pipe, &argc, sizeof(uint32_t));
+
+					time.minutes = be64toh(time.minutes);
+					time.hours = be32toh(time.hours);
+					argc = be32toh(argc);
+
+					cmdl->ARGC = argc;
+					cmdl->ARGVs = malloc(sizeof(string_p)*argc);
+
+					for (uint32_t i = 0; i < argc; i++) {
+
+						uint32_t len;
+						read(request_pipe, &len, sizeof(uint32_t));
+						len = be32toh(len);
+						char *lilbuf = (char *)malloc(len);
+						read(request_pipe, lilbuf, len);
+
+						cmdl->ARGVs[i] = string_createln(lilbuf, len);
+
+						free(lilbuf);
+					}
+
+					task *newTask = task_create(taskNb, cmdl, time);
+					tasklist_addTask(tasklist, newTask);
+					//TODO : créer repertoire et fichiers
+
+					uint16_t rep = htobe16(SERVER_REPLY_OK);
+					uint64_t taskId = htobe64(taskNb);
+
+					string_p ans = string_createln(&rep, sizeof(rep));
+					string_p s = string_createln(&taskId, sizeof(taskId));
+
+					string_concat(ans, s);
+
+					write(answer_pipe, ans->chars, ans->length);
+
+					string_free(ans);
+					string_free(s);
+
+					taskNb++;
+
 					break;
 				}
 				case CLIENT_REQUEST_REMOVE_TASK: {
@@ -125,9 +181,11 @@ void saturnd_loop(char* request_pipe_path, char* answer_pipe_path, char* tasks_d
 					break;
 				}
 				case CLIENT_REQUEST_TERMINATE: {
-					close(request_pipe);
+					
 					uint16_t rep = htobe16(SERVER_REPLY_OK);
 					write(answer_pipe, &rep, sizeof(uint16_t));
+
+					close(request_pipe);
 					close(answer_pipe);
 
 					tasklist_free(tasklist);
@@ -135,7 +193,9 @@ void saturnd_loop(char* request_pipe_path, char* answer_pipe_path, char* tasks_d
 					free(request_pipe_path);
 					free(answer_pipe_path);
 					free(tasks_dir);
-					// TODO rm every task folder (pas forcément ?)
+					// pas besoin de supprimer le répertoire avec les taches :
+					// il est demandé que relancer saturnd permette de reprendre
+					// les taches existantes.
 					printf("Exiting\n");
 					exit(0);
 					break;
