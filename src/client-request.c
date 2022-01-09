@@ -8,7 +8,10 @@ void commandline_free(commandline *cmdl) {
   free(cmdl);
 }
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> master
 string_p commandline_toString(commandline *cmdl) {
   int n = cmdl->ARGC;
   string_p s = string_create("");
@@ -23,5 +26,54 @@ string_p commandline_toString(commandline *cmdl) {
   return s;
 }
 
+<<<<<<< HEAD
+=======
+commandline *commandline_charsToCommandline(char *str) {
+  commandline *cmld = malloc(sizeof(commandline));
+  int argc = 1;
+  // on ignore les espaces consécutifs
+  int lastWasSpace=0;
+  int inQuotes=0;
+  int inDQuotes=0;
+
+  for (uint32_t i = 0; i < strlen(str); i++) {
+    if (str[i] == ' ' && !(lastWasSpace) && !(inQuotes) && !(inDQuotes)) {
+      argc++;
+      lastWasSpace = 1;
+    } 
+    else if (str[i] == '\'' && i>0 && str[i-1] != '\\') inQuotes = !inQuotes;
+    else if (str[i] == '\"' && i>0 && str[i-1] != '\\') inDQuotes = !inDQuotes;
+    else if (str[i] != ' ') lastWasSpace = 0;
+  }
+
+  cmld->ARGC = argc;
+  cmld->ARGVs = malloc(argc * sizeof(string_p));
+
+  string_p s = string_create("");
+
+  int n=0;
+  lastWasSpace=0;
+  inQuotes=0;
+  inDQuotes=0;
+  for (uint32_t i = 0; i < strlen(str); i++) {
+    if (str[i] == ' ' && !(lastWasSpace) && !(inQuotes) && !(inDQuotes)) {
+      argc++;
+      lastWasSpace = 1;
+      cmld->ARGVs[n] = s;
+      n++;
+      s = string_create("");
+    } 
+    else {
+      if (str[i] == '\'' && i>0 && str[i-1] != '\\') inQuotes = !inQuotes;
+      else if (str[i] == '\"' && i>0 && str[i-1] != '\\') inDQuotes = !inDQuotes;
+      if (str[i] != ' ') lastWasSpace = 0;
+      if (!lastWasSpace) string_addChar(s, str[i]);
+    }
+  }
+  cmld->ARGVs[n] = s;
+  
+  return cmld;
+}
+>>>>>>> master
 
 

@@ -24,7 +24,8 @@ string_p string_createln(const void *charArray, int length);
 string_p string_concatStringsKeepLength(string_p *strArray, int nb);
 
 void string_concat(string_p s1, string_p s2);
-void string_trimStart(string_p s, int n);
+void string_addChar(string_p s, char c);
+// void string_trimStart(string_p s, int n);
 
 void string_free(string_p s);
 
