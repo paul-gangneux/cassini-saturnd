@@ -58,6 +58,7 @@ task *task_create(uint16_t id, commandline *cmdl, timing timing) {
 
 tasklist *tasklist_create() {
 	tasklist *tasklist_p = malloc(sizeof(tasklist));
+	tasklist_p->first = NULL;
 	return tasklist_p;
 }
 

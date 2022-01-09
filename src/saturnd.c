@@ -61,6 +61,9 @@ int main() {
 		}
 	}
 
+	free(req_pipe_path);
+	free(ans_pipe_path);
+	free(tasks_directory);
 }
 
 void saturnd_loop(char* request_pipe_path, char* answer_pipe_path, char* tasks_dir) {
