@@ -12,16 +12,18 @@ int main() {
 	// TODO parsing arguments
 
 	char *pipes_directory;
+	char *tasks_directory;
 	char *username = getenv("USER");
 	char *buf = calloc(512, 1);
 
   if (username != NULL) {
     int u = strlen(username);
     pipes_directory = calloc(20 + u, 1);
+		tasks_directory = calloc(20 + u, 1);
     sprintf(pipes_directory, "/tmp/%s/saturnd/pipes", username);
-		// TODO : garder /tmp/[USERNAME]/saturnd/ en mémoire dans une variable globale, pourra être utile
+		sprintf(tasks_directory, "/tmp/%s/saturnd/tasks", username);
   } else {
-		printf("Cannot get environment variable USER");
+		printf("Cannot get environment variable USER\n");
 		return 1;
 	}
 
@@ -41,7 +43,10 @@ int main() {
 	mkdir(buf, 0777);
 	sprintf(buf, "/tmp/%s/saturnd/pipes", username);
 	mkdir(buf, 0777);
+	sprintf(buf, "/tmp/%s/saturnd/tasks", username);
+	mkdir(buf, 0777);
 
+	// création des tubes
 	mkfifo(req_pipe_path, 0666);
 	mkfifo(ans_pipe_path, 0666);
 
@@ -52,19 +57,25 @@ int main() {
 	// par init lors de la fin du processus principal
 	if (fork() == 0) {
 		if(fork() == 0) {
-			saturnd_loop(req_pipe_path, ans_pipe_path);
+			saturnd_loop(req_pipe_path, ans_pipe_path, tasks_directory);
 		}
 	}
+
 }
 
-void saturnd_loop(char* rtp, char* atp) {
-	// le tube est ouvert en lecture-écriture pour éviter que 
-	// poll() retourne immédiatement. il ne faut pas écrire dans ce tube
-	int request_pipe = open(rtp, O_RDWR);
-	int answer_pipe = open(atp, O_WRONLY); 
+void saturnd_loop(char* request_pipe_path, char* answer_pipe_path, char* tasks_dir) {
 
-	task* tasklist; // TODO lire les taches existantes
-	// TODO liste chainee plus adaptee pour liste des taches ?
+	// ouverture des tubes
+	// request_pipe est ouvert en lecture-écriture pour éviter que 
+	// poll() retourne immédiatement. il ne faut pas écrire dedans
+	int request_pipe = open(request_pipe_path, O_RDWR);
+	if (request_pipe < 0) perror("open request pipe");
+
+	// définit l'id des nouvelles taches. n'est jamais décrémenté, même quand une tache est supprimée
+	uint32_t taskNb = 0;
+
+	tasklist* tasklist = tasklist_create(); 
+	// TODO lire les taches existantes (et adapter taskNb en conséquence)
 
 	// Contenu possible des requetes
 	uint16_t opcode = 0;
@@ -79,14 +90,19 @@ void saturnd_loop(char* rtp, char* atp) {
 
 		// on attend une requete pendant 500ms
 		poll(&pfd, 1, 500);
+		
 		// on ne lis et répond à la requête que s'il y en a effectivement une
 		if (pfd.revents & POLLIN) {
 			read(request_pipe, &opcode, sizeof(uint16_t));
 			opcode = be16toh(opcode);
 
+			// ouverture du tube de réponse
+			int answer_pipe = open(answer_pipe_path, O_WRONLY);
+			if (answer_pipe < 0) perror("open answer pipe");
+
 			switch (opcode) {
 				case CLIENT_REQUEST_LIST_TASKS: {
-					uint32_t nbTasks = 0; //TODO
+					uint32_t nbTasks = tasklist_length(tasklist);
 					uint16_t rep = htobe16(SERVER_REPLY_OK);
 					nbTasks = htobe32(nbTasks);
 					write(answer_pipe, &rep, sizeof(uint16_t));
@@ -114,8 +130,12 @@ void saturnd_loop(char* rtp, char* atp) {
 					write(answer_pipe, &rep, sizeof(uint16_t));
 					close(answer_pipe);
 
+					tasklist_free(tasklist);
+
+					free(request_pipe_path);
+					free(answer_pipe_path);
+					free(tasks_dir);
 					// TODO rm every task folder (pas forcément ?)
-					// TODO free tasklist
 					printf("Exiting\n");
 					exit(0);
 					break;
@@ -131,6 +151,8 @@ void saturnd_loop(char* rtp, char* atp) {
 				default:
 					break;
 			}
+
+			close(answer_pipe);
 			pfd.revents = 0;
 		}
 	}
