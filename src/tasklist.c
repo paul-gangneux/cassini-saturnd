@@ -201,6 +201,8 @@ void task_execute(task *t, char *tasks_dir) {
 		}
 
 		execvp(args[0], args+1);
+		exit(1);
+
 	} else {
 		t->pid_of_exec = p;
 		t->exec_time = time(0);

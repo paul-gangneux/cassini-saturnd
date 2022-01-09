@@ -8,10 +8,6 @@ void commandline_free(commandline *cmdl) {
   free(cmdl);
 }
 
-<<<<<<< HEAD
-
-=======
->>>>>>> master
 string_p commandline_toString(commandline *cmdl) {
   int n = cmdl->ARGC;
   string_p s = string_create("");
@@ -26,8 +22,6 @@ string_p commandline_toString(commandline *cmdl) {
   return s;
 }
 
-<<<<<<< HEAD
-=======
 commandline *commandline_charsToCommandline(char *str) {
   commandline *cmld = malloc(sizeof(commandline));
   int argc = 1;
@@ -74,6 +68,5 @@ commandline *commandline_charsToCommandline(char *str) {
   
   return cmld;
 }
->>>>>>> master
 
 
