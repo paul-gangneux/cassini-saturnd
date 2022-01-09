@@ -53,6 +53,7 @@ task *task_create(uint16_t id, commandline *cmdl, timing timing) {
 	task_p->cmdl = cmdl;
 	task_p->timing = timing;
 	task_p->next = NULL;
+	task_p->pid_of_exec = -1;
 	return task_p;
 }
 
@@ -139,4 +140,34 @@ string_p tasklist_toString(tasklist *tl) {
 	return s;
 }
 
+void task_execute(task *t, char *tasks_dir) {
+	if (t->pid_of_exec > 0)
+		return;
 
+	char specific_dir [strlen(tasks_dir) + 2 + 20];
+	sprintf(specific_dir, "%s/%lu/", tasks_dir, t->id);
+
+	char std_out_fp[strlen(specific_dir) + 7];
+	sprintf(std_out_fp, "%s%s", specific_dir, "std_out");
+
+	char std_err_fp[strlen(specific_dir) + 7];
+	sprintf(std_err_fp, "%s%s", specific_dir, "std_err");
+
+	pid_t p = fork();
+	if (p == 0) {
+		int std_out = open(std_out_fp, O_RDWR | O_APPEND | O_CREAT, S_IRUSR | S_IWUSR);
+		dup2(std_out, 2);
+
+		int std_err = open(std_err_fp, O_RDWR | O_APPEND | O_CREAT, S_IRUSR | S_IWUSR);
+		dup2(std_err, 2);
+
+		char* args[t->cmdl->ARGC];
+		for (uint32_t i = 0; i < t->cmdl->ARGC; i++) {
+			args[i] = t->cmdl->ARGVs[i]->chars;
+		}
+
+		execvp(args[0], args+1);
+	} else {
+		t->pid_of_exec = p;
+	}
+}

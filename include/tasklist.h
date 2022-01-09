@@ -1,12 +1,16 @@
 #ifndef TASKLIST_H
 #define TASKLIST_H
 
+#include <fcntl.h>
+#include <unistd.h>
+
 #include "client-request.h"
 #include "custom-string.h"
 
 typedef struct task task;
 struct task {
 	// TODO precision d'une tache
+	pid_t pid_of_exec;
 	uint64_t id;
 	commandline *cmdl;
 	timing timing;
@@ -28,5 +32,7 @@ int tasklist_length(tasklist *tl);
 tasklist *tasklist_create();
 void tasklist_free(tasklist *tl);
 string_p tasklist_toString(tasklist *tl);
+
+void task_execute(task* t, char* tasks_dir);
 
 #endif
