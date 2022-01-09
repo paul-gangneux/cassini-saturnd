@@ -64,6 +64,18 @@ void string_concat(string_p s1, string_p s2) {
   free(tmp);
 }
 
+void string_addChar(string_p s, char c) {
+  char *tmp = s->chars;
+
+  s->length = s->length + 1;
+  s->chars = malloc(s->length);
+
+  memmove(s->chars, tmp, s->length - 1);
+  memmove(s->chars + s->length - 1, &c, 1);
+
+  free(tmp);
+}
+
 void string_free(string_p s) {
   free(s->chars);
   free(s);

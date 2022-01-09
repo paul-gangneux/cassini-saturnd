@@ -74,11 +74,11 @@ void saturnd_loop(char* request_pipe_path, char* answer_pipe_path, char* tasks_d
 	int request_pipe = open(request_pipe_path, O_RDWR);
 	if (request_pipe < 0) perror("open request pipe");
 
-	// définit l'id des nouvelles taches. n'est jamais décrémenté, même quand une tache est supprimée
-	uint64_t taskNb = 0;
+	tasklist* tasklist = tasklist_create();
 
-	tasklist* tasklist = tasklist_create(); 
-	// TODO lire les taches existantes (et adapter taskNb en conséquence)
+	// taskNb définit l'id des nouvelles taches. n'est jamais décrémenté, même quand une tache est supprimée
+	// ici on lit les taches déjà présentes sur le disque
+	uint64_t taskNb = tasklist_readTasksInDir(tasklist, tasks_dir);
 
 	// Contenu possible des requetes
 	uint16_t opcode = 0;
@@ -156,7 +156,8 @@ void saturnd_loop(char* request_pipe_path, char* answer_pipe_path, char* tasks_d
 
 					task *newTask = task_create(taskNb, cmdl, time);
 					tasklist_addTask(tasklist, newTask);
-					//TODO : créer repertoire et fichiers
+
+					task_createFiles(newTask, tasks_dir);
 
 					uint16_t rep = htobe16(SERVER_REPLY_OK);
 					uint64_t taskId = htobe64(taskNb);
@@ -179,10 +180,9 @@ void saturnd_loop(char* request_pipe_path, char* answer_pipe_path, char* tasks_d
 					uint64_t id;
 					read(request_pipe, &id, sizeof(uint64_t));
 					id = be64toh(id);
-					int found = takslist_remove(tasklist, id);
+					int found = takslist_remove(tasklist, id, tasks_dir);
 
 					if (found) {
-						//TODO : supprimer fichiers et repertoires
 						uint16_t rep = htobe16(SERVER_REPLY_OK);
 						write(answer_pipe, &rep, sizeof(uint16_t));
 					} else {

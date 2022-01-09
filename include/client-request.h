@@ -47,6 +47,7 @@ typedef struct {
 } cli_request_task_chars;
 
 void commandline_free(commandline *cmdl);
-// string_p commandline_toString(commandline *cmdl);
+string_p commandline_toString(commandline *cmdl);
+commandline *commandline_charsToCommandline(char *str);
 
 #endif // CLIENT_REQUEST_H
