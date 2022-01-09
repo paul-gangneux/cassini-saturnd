@@ -331,6 +331,7 @@ int main(int argc, char *argv[]) {
       printf("ERROR: ");
       uint16_t get_error;
       read(reply_pipe, &get_error, sizeof(uint16_t));
+      get_error = be16toh(get_error);
       if (get_error == SERVER_REPLY_ERROR_NOT_FOUND) {
         printf("task not found\n");
       } else {
@@ -370,6 +371,7 @@ int main(int argc, char *argv[]) {
       printf("ERROR: ");
       uint16_t get_error;
       read(reply_pipe, &get_error, sizeof(uint16_t));
+      get_error = be16toh(get_error);
       if (get_error == SERVER_REPLY_ERROR_NOT_FOUND) {
         printf("task not found\n");
       } else {
@@ -409,7 +411,8 @@ int main(int argc, char *argv[]) {
       printf("ERROR: ");
       uint16_t get_error;
       read(reply_pipe, &get_error, sizeof(uint16_t));
-
+      get_error = be16toh(get_error);
+      
       if (get_error == SERVER_REPLY_ERROR_NOT_FOUND) {
         printf("task not found\n");
       } else if (get_error == SERVER_REPLY_ERROR_NEVER_RUN) {

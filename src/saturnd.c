@@ -173,7 +173,22 @@ void saturnd_loop(char* request_pipe_path, char* answer_pipe_path, char* tasks_d
 					break;
 				}
 				case CLIENT_REQUEST_REMOVE_TASK: {
-					/* code */
+					uint64_t id;
+					read(request_pipe, &id, sizeof(uint64_t));
+					id = be64toh(id);
+					int found = takslist_remove(tasklist, id);
+
+					if (found) {
+						//TODO : supprimer fichiers et repertoires
+						uint16_t rep = htobe16(SERVER_REPLY_OK);
+						write(answer_pipe, &rep, sizeof(uint16_t));
+					} else {
+						uint16_t rep0 = htobe16(SERVER_REPLY_ERROR);
+						uint16_t rep1 = htobe16(SERVER_REPLY_ERROR_NOT_FOUND);
+						uint16_t rep[2];
+						rep[0] = rep0; rep[1] = rep1;
+						write(answer_pipe, rep, sizeof(uint32_t));
+					}
 					break;
 				}
 				case CLIENT_REQUEST_GET_TIMES_AND_EXITCODES: {
