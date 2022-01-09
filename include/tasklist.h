@@ -3,6 +3,7 @@
 
 #include <fcntl.h>
 #include <unistd.h>
+#include <sys/wait.h>
 
 #include "client-request.h"
 #include "custom-string.h"

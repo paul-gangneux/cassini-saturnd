@@ -171,3 +171,29 @@ void task_execute(task *t, char *tasks_dir) {
 		t->pid_of_exec = p;
 	}
 }
+
+void execute_tasklist(tasklist *tl, char *tasks_dir) {
+	task *t = tl->first;
+	while (t!=NULL) {
+		char specific_dir [strlen(tasks_dir) + 2 + 20];
+		sprintf(specific_dir, "%s/%lu/", tasks_dir, t->id);
+
+		char return_values_fp[strlen(specific_dir) + 13];
+		sprintf(return_values_fp, "%s%s", specific_dir, "return_values");
+		
+		int *status = 0;
+		if (t->pid_of_exec > 0) {
+			waitpid(t->pid_of_exec, status, WNOHANG);
+
+			int b = open(return_values_fp, O_APPEND | O_CREAT, S_IRWXU);
+			write(b, status, sizeof(status));
+			close(b);
+
+			t->pid_of_exec = -1;
+		} else /* if (is_it_my_time(t->timing) == 1) */ {
+			task_execute(t, tasks_dir);
+		}
+
+		t=t->next;
+	}
+}
