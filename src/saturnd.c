@@ -7,7 +7,7 @@
 #include <inttypes.h>
 #include <sys/stat.h>
 #include <poll.h>
-#include<time.h>
+#include <time.h>
 
 #include "saturnd.h"
 #include "timing-text-io.h"
@@ -237,27 +237,21 @@ void saturnd_loop(char* request_pipe_path, char* answer_pipe_path, char* tasks_d
 	}
 }
 
-uint64_t timing_field_from_int(uint64_t *dest, int i, unsigned int min, unsigned int max){
-	char str [3*sizeof(char)];
-	sprintf(str, "%d", i);
-	return timing_field_from_string(dest, str, min, max);
-}
-//revoie 1 si la minute actuelle correspond ai timming en argument, 0 sinon
-int is_it_my_time (timing *exeTiming){
-	time_t* timer;
-	time(timer);
-	struct tm* realTime = localtime(timer);
+// revoie 1 si la minute actuelle correspond au timming en argument, 0 sinon
+int is_it_my_time (timing *exeTiming) {
+	time_t timer = time(NULL);
+	struct tm* realTime = localtime(&timer);
 	uint64_t buff;
 
-	//vérifie d'abord le jour de la semaine
-	buff = timing_field_from_int (&buff, realTime -> tm_wday, 0, 6);
-	if ((exeTiming-> daysofweek)&((uint8_t)buff)){  //S'il y a un 1 ici, c'est qu'on est le bon jour (normalement)
+	// vérifie d'abord le jour de la semaine
+	timing_field_from_int(&buff, realTime->tm_wday, 0, 6);
+	if ((exeTiming-> daysofweek) & ((uint8_t)buff)) {  // S'il y a un 1 ici, c'est qu'on est le bon jour (normalement)
 		//Verifions ensuite l'heure
-		buff = timing_field_from_int (&buff, realTime -> tm_hour, 0, 23);
-		if ((exeTiming-> hours)&((uint32_t)buff)){  //S'il y a un 1 ici, c'est qu'on est le bon jour (normalement)
+		timing_field_from_int(&buff, realTime->tm_hour, 0, 23);
+		if ((exeTiming-> hours) & ((uint32_t)buff)){  // S'il y a un 1 ici, c'est qu'on est la bonne heure (normalement)
 			//Verifions ensuite la minute
-			buff = timing_field_from_int (&buff, realTime -> tm_min, 0, 59);
-			if ((exeTiming-> minutes)&((uint64_t)buff)){  //S'il y a un 1 ici, c'est qu'on est le bon jour (normalement)
+			timing_field_from_int(&buff, realTime->tm_min, 0, 59);
+			if ((exeTiming->minutes) & ((uint64_t)buff)){  //S'il y a un 1 ici, c'est qu'on est la bonne minute (normalement)
 				return 1;
 			}
 		}

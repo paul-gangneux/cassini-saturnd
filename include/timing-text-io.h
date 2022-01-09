@@ -33,5 +33,6 @@ int timing_uint_from_string(unsigned long int *dest, const char *string);
 int timing_string_from_field(char *dest, unsigned int min, unsigned int max,
                              uint64_t field);
 int timing_string_from_range(char *dest, unsigned int start, unsigned int stop);
+uint64_t timing_field_from_int(uint64_t *dest, int i, unsigned int min, unsigned int max);
 
 #endif // TIMING_TEXT_IO_H

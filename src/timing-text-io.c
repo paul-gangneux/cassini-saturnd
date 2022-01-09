@@ -185,3 +185,9 @@ int timing_string_from_range(char *dest, unsigned int start,
     sprintf_result = sprintf(dest, "%u-%u", start, stop);
   return sprintf_result;
 }
+
+uint64_t timing_field_from_int(uint64_t *dest, int i, unsigned int min, unsigned int max) {
+  char str[3 * sizeof(char)];
+  sprintf(str, "%d", i);
+  return timing_field_from_string(dest, str, min, max);
+}
