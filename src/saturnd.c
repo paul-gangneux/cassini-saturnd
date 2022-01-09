@@ -86,7 +86,7 @@ void saturnd_loop(char* request_pipe_path, char* answer_pipe_path, char* tasks_d
 	pfd.events = POLLIN;
 
 	while(1) {
-		// TODO execution des taches
+		tasklist_execute(tasklist, tasks_dir);
 
 		// on attend une requete pendant 500ms
 		poll(&pfd, 1, 500);

@@ -3,6 +3,7 @@
 
 #include <fcntl.h>
 #include <unistd.h>
+#include <sys/stat.h>
 #include <sys/wait.h>
 #include <time.h>
 
@@ -37,5 +38,6 @@ void tasklist_free(tasklist *tl);
 string_p tasklist_toString(tasklist *tl);
 
 void task_execute(task* t, char* tasks_dir);
+void tasklist_execute(tasklist *tl, char *tasks_dir);
 
 #endif

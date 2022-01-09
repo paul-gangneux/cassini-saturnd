@@ -182,14 +182,14 @@ void tasklist_execute(tasklist *tl, char *tasks_dir) {
 		char return_values_fp[strlen(specific_dir) + 14];
 		sprintf(return_values_fp, "%s%s", specific_dir, "return_values");
 		
-		int *status = -1;
+		int status = -1;
 		if (t->pid_of_exec > 0) {
-			waitpid(t->pid_of_exec, status, WNOHANG);
+			waitpid(t->pid_of_exec, &status, WNOHANG);
 
 			if (status != -1) {
 				int b = open(return_values_fp, O_APPEND | O_CREAT, S_IRWXU);
 				write(b, &t->exec_time, sizeof(time_t));
-				write(b, status, sizeof(status));
+				write(b, &status, sizeof(status));
 				close(b);
 
 				t->pid_of_exec = -1;
