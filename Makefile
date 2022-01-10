@@ -23,6 +23,10 @@ cassini: $(cassini_headers) $(cassini_source)
 saturnd: $(saturnd_headers) $(saturnd_source)
 	$(CC) $(OPTS) -I$(HEADERS_PATH) $(saturnd_source) -o saturnd
 
+saturnd-debug: $(saturnd_headers) $(saturnd_source)
+	$(CC) $(OPTS) -g -I$(HEADERS_PATH) $(saturnd_source) -o saturnd
+	gdb ./saturnd
+
 .PHONY: test
 test: cassini
 	./run-cassini-tests.sh

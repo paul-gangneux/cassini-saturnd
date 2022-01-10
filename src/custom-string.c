@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <fcntl.h>
 
 string_p string_create(const char *charArray) {
   int l = strlen(charArray);
@@ -86,6 +87,26 @@ void string_print(string_p s) { write(STDOUT_FILENO, s->chars, s->length); }
 void string_println(string_p s) {
   string_print(s);
   write(STDOUT_FILENO, "\n", 1);
+}
+
+// return NULL if file not found
+string_p string_readFromFile(const char* path) {
+  int fd = open(path, O_RDONLY);
+  if (fd < 0) {
+    return NULL;
+  }
+  char buf[1024];
+  int ssize;
+  string_p str = string_create("");
+
+  while((ssize = read(fd, buf, 1024))) {
+    string_p str2 = string_createln(buf, ssize);
+    string_concat(str, str2);
+    string_free(str2);
+  }
+
+  close(fd);
+  return str;
 }
 
 /*
