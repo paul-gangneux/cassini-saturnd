@@ -59,11 +59,17 @@ int main() {
 
 	// La boucle principale est dans un double fork, et est ainsi adoptee
 	// par init lors de la fin du processus principal
+	// On ne fork que si DEBUG n'est pas defini, le fork rendant le
+	// debug plus complique
+#ifndef DEBUG
 	if (fork() == 0) {
 		if(fork() == 0) {
+#endif
 			saturnd_loop(req_pipe_path, ans_pipe_path, tasks_directory);
+#ifndef DEBUG
 		}
 	}
+#endif
 
 	free(req_pipe_path);
 	free(ans_pipe_path);
@@ -111,6 +117,8 @@ void saturnd_loop(char* request_pipe_path, char* answer_pipe_path, char* tasks_d
 	if (request_pipe < 0) perror("open request pipe");
 
 	tasklist* tasklist = tasklist_create();
+	time_t last_exec = 0;
+	time_t now;
 
 	// taskNb définit l'id des nouvelles taches. n'est jamais décrémenté, même quand une tache est supprimée
 	// ici on lit les taches déjà présentes sur le disque
@@ -125,7 +133,11 @@ void saturnd_loop(char* request_pipe_path, char* answer_pipe_path, char* tasks_d
 	pfd.events = POLLIN;
 
 	while(1) {
-		tasklist_execute(tasklist, tasks_dir);
+		now = time(0);
+		if ( now - last_exec >= 60 ) {
+			tasklist_execute(tasklist, tasks_dir);
+			last_exec = now;
+		}
 
 		// on attend une requete pendant 1s
 		poll(&pfd, 1, 1000);
@@ -296,26 +308,4 @@ void saturnd_loop(char* request_pipe_path, char* answer_pipe_path, char* tasks_d
 			pfd.revents = 0;
 		}
 	}
-}
-
-// revoie 1 si la minute actuelle correspond au timming en argument, 0 sinon
-int is_it_my_time (timing *exeTiming) {
-	time_t timer = time(NULL);
-	struct tm* realTime = localtime(&timer);
-	uint64_t buff;
-
-	// vérifie d'abord le jour de la semaine
-	timing_field_from_int(&buff, realTime->tm_wday, 0, 6);
-	if ((exeTiming-> daysofweek) & ((uint8_t)buff)) {  // S'il y a un 1 ici, c'est qu'on est le bon jour (normalement)
-		//Verifions ensuite l'heure
-		timing_field_from_int(&buff, realTime->tm_hour, 0, 23);
-		if ((exeTiming-> hours) & ((uint32_t)buff)){  // S'il y a un 1 ici, c'est qu'on est la bonne heure (normalement)
-			//Verifions ensuite la minute
-			timing_field_from_int(&buff, realTime->tm_min, 0, 59);
-			if ((exeTiming->minutes) & ((uint64_t)buff)){  //S'il y a un 1 ici, c'est qu'on est la bonne minute (normalement)
-				return 1;
-			}
-		}
-	}
-	return 0;
 }

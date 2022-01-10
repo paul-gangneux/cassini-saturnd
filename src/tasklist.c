@@ -242,7 +242,7 @@ void tasklist_execute(tasklist *tl, char *tasks_dir) {
 				t->pid_of_exec = -1;
 				t->nb_of_runs++;
 			}
-		} else /* if (is_it_my_time(t->timing) == 1) */ {
+		} else if (is_it_my_time(t->timing) == 1) {
 			task_execute(t, tasks_dir);
 		}
 
@@ -350,4 +350,26 @@ uint32_t task_getNbExec(task *t, uint64_t id) {
 
 uint32_t tasklist_getNbExec(tasklist *tl, uint64_t id) {
 	return task_getNbExec(tl->first, id);
+}
+
+// revoie 1 si la minute actuelle correspond au timming en argument, 0 sinon
+int is_it_my_time (timing *exeTiming) {
+	time_t timer = time(NULL);
+	struct tm* realTime = localtime(&timer);
+	uint64_t buff;
+
+	// vérifie d'abord le jour de la semaine
+	timing_field_from_int(&buff, realTime->tm_wday, 0, 6);
+	if ((exeTiming-> daysofweek) & ((uint8_t)buff)) {  // S'il y a un 1 ici, c'est qu'on est le bon jour (normalement)
+		//Verifions ensuite l'heure
+		timing_field_from_int(&buff, realTime->tm_hour, 0, 23);
+		if ((exeTiming-> hours) & ((uint32_t)buff)){  // S'il y a un 1 ici, c'est qu'on est la bonne heure (normalement)
+			//Verifions ensuite la minute
+			timing_field_from_int(&buff, realTime->tm_min, 0, 59);
+			if ((exeTiming->minutes) & ((uint64_t)buff)){  //S'il y a un 1 ici, c'est qu'on est la bonne minute (normalement)
+				return 1;
+			}
+		}
+	}
+	return 0;
 }
