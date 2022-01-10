@@ -84,9 +84,15 @@ void answer_with_file_content_at_id(uint64_t id, const char* file_dir, const cha
 	} else {
 		uint16_t rep = htobe16(SERVER_REPLY_OK);
 		string_p ans = string_createln(&rep, sizeof(rep));
+		uint32_t strl = ans->length; // si je met en big-endian ici ça marche pas jsp pourquoi
+
+		string_p len = string_createln(&strl, sizeof(strl));
+		string_concat(ans, len);
 		string_concat(ans, output);
+
 		write(answer_fd, ans->chars, ans->length);
 		string_free(ans);
+		string_free(len);
 		string_free(output);
 	}
 	free(path);
@@ -220,7 +226,27 @@ void saturnd_loop(char* request_pipe_path, char* answer_pipe_path, char* tasks_d
 					uint64_t id;
 					read(request_pipe, &id, sizeof(uint64_t));
 					id = be64toh(id);
-					answer_with_file_content_at_id(id, tasks_dir, "return_values", answer_pipe);
+					char* path = calloc(strlen(tasks_dir) + 64, 1);
+					sprintf(path, "%s/%lu/return_values", tasks_dir, id);
+					string_p output = string_readFromFile(path);
+					if (output == NULL) {
+						write_error_not_found(answer_pipe);
+					} else {
+						uint16_t rep = htobe16(SERVER_REPLY_OK);
+						uint32_t nbexec = tasklist_getNbExec(tasklist, id);
+						nbexec = htobe32(nbexec);
+						string_p ans = string_createln(&rep, sizeof(uint16_t));
+						string_p s = string_createln(&nbexec, sizeof(uint32_t));
+
+						string_concat(ans, s);
+						string_concat(ans, output);
+						
+						write(answer_pipe, ans->chars, ans->length);
+						string_free(ans);
+						string_free(output);
+						string_free(s);
+					}
+					free(path);
 					break;
 				}
 				case CLIENT_REQUEST_TERMINATE: {

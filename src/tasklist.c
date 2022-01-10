@@ -16,8 +16,6 @@ void tasklist_addTask(tasklist *tl, task *t) {
 	tl->first = t;
 }
 
-
-
 // fonction auxiliaire
 void delete_files(uint64_t id, const char *path) {
 	char *dir = malloc(strlen(path) + 16);
@@ -84,6 +82,7 @@ void tasklist_iter(void (*operation)(task *), tasklist *tl) {
 // on suppose que la mémoire de cmdl et timing ont déjà été allouées
 task *task_create(uint16_t id, commandline *cmdl, timing *timing) {
 	task *task_p = malloc(sizeof(task));
+	task_p->nb_of_runs = 0;
 	task_p->id = id;
 	task_p->cmdl = cmdl;
 	task_p->timing = timing;
@@ -192,10 +191,10 @@ void task_execute(task *t, char *tasks_dir) {
 
 	pid_t p = fork();
 	if (p == 0) {
-		int std_out = open(std_out_fp, O_RDWR | O_APPEND | O_CREAT, S_IRUSR | S_IWUSR);
+		int std_out = open(std_out_fp, O_RDWR | O_TRUNC | O_CREAT, S_IRUSR | S_IWUSR);
 		dup2(std_out, 1);
 
-		int std_err = open(std_err_fp, O_RDWR | O_APPEND | O_CREAT, S_IRUSR | S_IWUSR);
+		int std_err = open(std_err_fp, O_RDWR | O_TRUNC | O_CREAT, S_IRUSR | S_IWUSR);
 		dup2(std_err, 2);
 
 		char* args[t->cmdl->ARGC+1];
@@ -226,20 +225,22 @@ void tasklist_execute(tasklist *tl, char *tasks_dir) {
 		
 		int status = 0;
 		if (t->pid_of_exec > 0) {
-			waitpid(t->pid_of_exec, &status, WNOHANG);
+			int retval = waitpid(t->pid_of_exec, &status, WNOHANG);
 
-			if (status!=-1) {
+			if (retval>0) {
 				uint16_t st;
-				if (WIFEXITED(status)) st = WEXITSTATUS(status);
+				if (WIFEXITED(status)) st = htobe16(WEXITSTATUS(status));
 				else st = 0xFFFF;
-				int b = open(return_values_fp, O_APPEND);
+				int b = open(return_values_fp, O_WRONLY | O_APPEND);
 				
+				uint64_t time = be64toh(t->exec_time);
 				// ne fonctionne toujours pas =.=
-				write(b, &t->exec_time, sizeof(time_t));
+				write(b, &time, sizeof(uint64_t));
 				write(b, &st, sizeof(uint16_t));
 				close(b);
 
 				t->pid_of_exec = -1;
+				t->nb_of_runs++;
 			}
 		} else /* if (is_it_my_time(t->timing) == 1) */ {
 			task_execute(t, tasks_dir);
@@ -299,6 +300,9 @@ task* task_fromDirectory(const char* path, const char* dir_basename) {
 	sprintf(buf, "%s/%s", dir, "timing");
 	int tim_id = open(buf, O_RDONLY);
 
+	sprintf(buf, "%s/%s", dir, "return_values");
+	int ret_id = open(buf, O_RDONLY | O_TRUNC);
+
 	char *buf_cmdl = calloc(2048, 1);
 	timing *t = malloc(sizeof(timing));
 
@@ -315,6 +319,7 @@ task* task_fromDirectory(const char* path, const char* dir_basename) {
 
 	close(cmd_id);
 	close(tim_id);
+	close(ret_id);
 
 	return task;
 }
@@ -334,4 +339,15 @@ uint64_t tasklist_readTasksInDir(tasklist *tl, const char *path) {
 
 	closedir(dir);
 	return nb;
+}
+
+// fonction auxiliaire
+uint32_t task_getNbExec(task *t, uint64_t id) {
+	if (t==NULL) return 0;
+	if (t->id==id) return t->nb_of_runs;
+	return task_getNbExec(t->next, id);
+}
+
+uint32_t tasklist_getNbExec(tasklist *tl, uint64_t id) {
+	return task_getNbExec(tl->first, id);
 }

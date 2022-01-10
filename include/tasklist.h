@@ -12,6 +12,7 @@
 
 typedef struct task task;
 struct task {
+	uint32_t nb_of_runs;
 	pid_t pid_of_exec;
 	time_t exec_time;
 	uint64_t id;
@@ -40,5 +41,6 @@ uint64_t tasklist_readTasksInDir(tasklist *tl, const char *path);
 
 void task_execute(task* t, char* tasks_dir);
 void tasklist_execute(tasklist *tl, char *tasks_dir);
+uint32_t tasklist_getNbExec(tasklist *tl, uint64_t id);
 
 #endif
