@@ -274,7 +274,7 @@ void task_createFiles(task *task, const char *path) {
 	string_p cmld = commandline_toString(task->cmdl);
 	write(cmd_id, cmld->chars, cmld->length);
 
-	write(tim_id, &task->timing, sizeof(timing));
+	write(tim_id, task->timing, sizeof(timing));
 
 	string_free(cmld);
 	close(cmd_id);
