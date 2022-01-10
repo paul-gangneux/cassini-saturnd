@@ -234,7 +234,6 @@ void tasklist_execute(tasklist *tl, char *tasks_dir) {
 				int b = open(return_values_fp, O_WRONLY | O_APPEND);
 				
 				uint64_t time = be64toh(t->exec_time);
-				// ne fonctionne toujours pas =.=
 				write(b, &time, sizeof(uint64_t));
 				write(b, &st, sizeof(uint16_t));
 				close(b);
@@ -242,7 +241,7 @@ void tasklist_execute(tasklist *tl, char *tasks_dir) {
 				t->pid_of_exec = -1;
 				t->nb_of_runs++;
 			}
-		} else if (is_it_my_time(t->timing) == 1) {
+		} if (t->pid_of_exec ==-1 && is_it_my_time(t->timing) == 1) {
 			task_execute(t, tasks_dir);
 		}
 
