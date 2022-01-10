@@ -157,7 +157,7 @@ void saturnd_loop(char* request_pipe_path, char* answer_pipe_path, char* tasks_d
 					
 				case CLIENT_REQUEST_CREATE_TASK: {
 					
-					timing *time = malloc(sizeof(timing));
+					timing *time = calloc(1, sizeof(timing));
 					uint32_t argc;
 					commandline* cmdl = malloc(sizeof(commandline));
 
