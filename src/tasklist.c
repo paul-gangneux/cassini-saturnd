@@ -7,6 +7,7 @@
 #include "timing.h"
 #include "timing-text-io.h"
 #include "client-request.h"
+#include "commandline.h"
 
 #define max(a,b) a>b?a:b;
 

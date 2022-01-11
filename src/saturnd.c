@@ -1,4 +1,3 @@
-
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -11,6 +10,7 @@
 
 #include "saturnd.h"
 #include "timing-text-io.h"
+#include "commandline.h"
 
 int main() {
 	// TODO parsing arguments
