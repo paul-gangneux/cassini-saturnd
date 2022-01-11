@@ -336,8 +336,8 @@ int main(int argc, char *argv[]) {
         printf("task not found\n");
       } else {
         printf("remove - wrong error type\n");
-        goto error;
       }
+      goto error;
     } else {
       printf("Error: saturnd's answer doesn't make sense\n");
       goto error;
@@ -376,8 +376,8 @@ int main(int argc, char *argv[]) {
         printf("task not found\n");
       } else {
         printf("times exitcode - wrong error type\n");
-        goto error;
       }
+      goto error;
     } else {
       printf("Error: saturnd's answer doesn't make sense\n");
       goto error;
@@ -419,8 +419,8 @@ int main(int argc, char *argv[]) {
         printf("task never run\n");
       } else {
         printf("stdout / stdin - wrong error type\n");
-        goto error;
       }
+      goto error;
     } else {
       printf("Error: saturnd's answer doesn't make sense\n");
       goto error;

@@ -2,6 +2,7 @@
 #define TIMING_H
 
 #include <stdint.h>
+#include <time.h>
 
 struct timing {
   uint64_t minutes;
@@ -10,5 +11,7 @@ struct timing {
 };
 
 typedef struct timing timing;
+
+int is_it_my_time(timing *t);
 
 #endif // TIMING_H

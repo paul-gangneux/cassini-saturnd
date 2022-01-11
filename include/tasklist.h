@@ -9,6 +9,7 @@
 
 #include "client-request.h"
 #include "custom-string.h"
+#include "timing.h"
 
 typedef struct task task;
 struct task {
@@ -43,4 +44,5 @@ void task_execute(task* t, char* tasks_dir);
 void tasklist_execute(tasklist *tl, char *tasks_dir);
 uint32_t tasklist_getNbExec(tasklist *tl, uint64_t id);
 
+uint64_t timing_field_from_int(uint64_t *dest, int i, unsigned int min, unsigned int max);
 #endif

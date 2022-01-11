@@ -7,7 +7,7 @@ SRC_PATH = ./src
 cassini_headers = $(HEADERS_PATH)/custom-string.h $(HEADERS_PATH)/client-request.h $(HEADERS_PATH)/cassini.h
 cassini_source = $(SRC_PATH)/timing-text-io.c $(SRC_PATH)/custom-string.c $(SRC_PATH)/client-request.c $(SRC_PATH)/cassini.c
 
-saturnd_headers = $(HEADERS_PATH)/custom-string.h $(HEADERS_PATH)/client-request.h $(HEADERS_PATH)/tasklist.h $(HEADERS_PATH)/saturnd.h
+saturnd_headers = $(HEADERS_PATH)/custom-string.h $(HEADERS_PATH)/timing.h $(HEADERS_PATH)/client-request.h $(HEADERS_PATH)/tasklist.h $(HEADERS_PATH)/saturnd.h
 saturnd_source = $(SRC_PATH)/timing-text-io.c $(SRC_PATH)/custom-string.c $(SRC_PATH)/client-request.c $(SRC_PATH)/tasklist.c $(SRC_PATH)/saturnd.c
 
 .PHONY: all
@@ -24,7 +24,7 @@ saturnd: $(saturnd_headers) $(saturnd_source)
 	$(CC) $(OPTS) -I$(HEADERS_PATH) $(saturnd_source) -o saturnd
 
 saturnd-debug: $(saturnd_headers) $(saturnd_source)
-	$(CC) $(OPTS) -g -I$(HEADERS_PATH) $(saturnd_source) -o saturnd
+	$(CC) $(OPTS) -g -DDEBUG -I$(HEADERS_PATH) $(saturnd_source) -o saturnd
 	gdb ./saturnd
 
 .PHONY: test

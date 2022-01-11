@@ -1,3 +1,5 @@
+
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -5,8 +7,10 @@
 #include <inttypes.h>
 #include <sys/stat.h>
 #include <poll.h>
+#include <time.h>
 
 #include "saturnd.h"
+#include "timing-text-io.h"
 
 int main() {
 	// TODO parsing arguments
@@ -55,11 +59,17 @@ int main() {
 
 	// La boucle principale est dans un double fork, et est ainsi adoptee
 	// par init lors de la fin du processus principal
+	// On ne fork que si DEBUG n'est pas defini, le fork rendant le
+	// debug plus complique
+#ifndef DEBUG
 	if (fork() == 0) {
 		if(fork() == 0) {
+#endif
 			saturnd_loop(req_pipe_path, ans_pipe_path, tasks_directory);
+#ifndef DEBUG
 		}
 	}
+#endif
 
 	free(req_pipe_path);
 	free(ans_pipe_path);
@@ -107,6 +117,8 @@ void saturnd_loop(char* request_pipe_path, char* answer_pipe_path, char* tasks_d
 	if (request_pipe < 0) perror("open request pipe");
 
 	tasklist* tasklist = tasklist_create();
+	time_t last_exec = 0;
+	time_t now;
 
 	// taskNb définit l'id des nouvelles taches. n'est jamais décrémenté, même quand une tache est supprimée
 	// ici on lit les taches déjà présentes sur le disque
@@ -121,7 +133,11 @@ void saturnd_loop(char* request_pipe_path, char* answer_pipe_path, char* tasks_d
 	pfd.events = POLLIN;
 
 	while(1) {
-		tasklist_execute(tasklist, tasks_dir);
+		now = time(0);
+		if ( now - last_exec >= 60 ) {
+			tasklist_execute(tasklist, tasks_dir);
+			last_exec = now;
+		}
 
 		// on attend une requete pendant 1s
 		poll(&pfd, 1, 1000);
