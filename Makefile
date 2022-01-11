@@ -7,8 +7,8 @@ SRC_PATH = ./src
 cassini_headers = $(HEADERS_PATH)/commandline.h $(HEADERS_PATH)/custom-string.h $(HEADERS_PATH)/client-request.h $(HEADERS_PATH)/cassini.h
 cassini_source = $(SRC_PATH)/timing-text-io.c $(SRC_PATH)/custom-string.c $(SRC_PATH)/commandline.c $(SRC_PATH)/cassini.c
 
-saturnd_headers = $(HEADERS_PATH)/commandline.h $(HEADERS_PATH)/custom-string.h $(HEADERS_PATH)/timing.h $(HEADERS_PATH)/client-request.h $(HEADERS_PATH)/tasklist.h $(HEADERS_PATH)/saturnd.h
-saturnd_source = $(SRC_PATH)/timing-text-io.c $(SRC_PATH)/custom-string.c $(SRC_PATH)/commandline.c $(SRC_PATH)/tasklist.c $(SRC_PATH)/saturnd.c
+saturnd_headers = $(HEADERS_PATH)/commandline.h $(HEADERS_PATH)/custom-string.h $(HEADERS_PATH)/client-request.h $(HEADERS_PATH)/timing.h $(HEADERS_PATH)/tasklist.h $(HEADERS_PATH)/saturnd.h
+saturnd_source = $(SRC_PATH)/timing-text-io.c $(SRC_PATH)/custom-string.c $(SRC_PATH)/commandline.c $(SRC_PATH)/tasklist.c $(SRC_PATH)/timing.c $(SRC_PATH)/saturnd.c
 
 .PHONY: all
 all: cassini saturnd

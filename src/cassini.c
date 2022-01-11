@@ -4,7 +4,6 @@
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
-//#include <sys/types.h>
 #include <fcntl.h>
 #include <inttypes.h>
 
@@ -250,11 +249,9 @@ int main(int argc, char *argv[]) {
 
       // We have our tasks, let's grab and decode each
       for (uint32_t i = 0; i < nb_tasks; i++) {
-        // TODO clean up that mess
         read(reply_pipe, &taskid, sizeof(uint64_t));
         taskid = be64toh(taskid);
 
-        // TODO print time
         read(reply_pipe, &timing.minutes, sizeof(uint64_t));
         timing.minutes = be64toh(timing.minutes);
 

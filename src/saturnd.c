@@ -13,7 +13,6 @@
 #include "commandline.h"
 
 int main() {
-	// TODO parsing arguments
 
 	char *pipes_directory;
 	char *tasks_directory;
@@ -108,13 +107,32 @@ void answer_with_file_content_at_id(uint64_t id, const char* file_dir, const cha
 	free(path);
 }
 
+// le fd passé en argument sera fermé lors d'un exec
+int set_cloexec_flag(int fd) {
+  int oldflags = fcntl(fd, F_GETFD, 0);
+	// on retourne immédiatement en cas d'échec
+  if (oldflags < 0)
+    return oldflags;
+
+	oldflags |= FD_CLOEXEC;
+  return fcntl(fd, F_SETFD, oldflags);
+}
+
 void saturnd_loop(char* request_pipe_path, char* answer_pipe_path, char* tasks_dir) {
 
 	// ouverture des tubes
 	// request_pipe est ouvert en lecture-écriture pour éviter que 
 	// poll() retourne immédiatement. il ne faut pas écrire dedans
 	int request_pipe = open(request_pipe_path, O_RDWR);
-	if (request_pipe < 0) perror("open request pipe");
+	if (request_pipe < 0) {
+		perror("open request pipe");
+		exit(1);
+	}
+	// on s'assure que request_pipe soit fermé lors d'un exec
+	if (set_cloexec_flag(request_pipe) < 0) {
+		perror("fcntl");
+		exit(1);
+	}
 
 	tasklist* tasklist = tasklist_create();
 	time_t last_exec = 0;
