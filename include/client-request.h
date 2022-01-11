@@ -1,9 +1,9 @@
 #ifndef CLIENT_REQUEST_H
 #define CLIENT_REQUEST_H
 
-#include "custom-string.h"
-#include "timing.h"
 #include <stdint.h>
+#include "timing.h"
+#include "commandline.h"
 
 #define CLIENT_REQUEST_LIST_TASKS 0x4c53              // 'LS'
 #define CLIENT_REQUEST_CREATE_TASK 0x4352             // 'CR'
@@ -12,11 +12,6 @@
 #define CLIENT_REQUEST_TERMINATE 0x544d               // 'TM'
 #define CLIENT_REQUEST_GET_STDOUT 0x534f              // 'SO'
 #define CLIENT_REQUEST_GET_STDERR 0x5345              // 'SE'
-
-typedef struct {
-  uint32_t ARGC;
-  string_p *ARGVs;
-} commandline;
 
 typedef struct {
   uint16_t OPCODE;
@@ -45,9 +40,5 @@ typedef struct {
   char opcode[2];
   char taskid[8];
 } cli_request_task_chars;
-
-void commandline_free(commandline *cmdl);
-string_p commandline_toString(commandline *cmdl);
-commandline *commandline_charsToCommandline(char *str);
 
 #endif // CLIENT_REQUEST_H

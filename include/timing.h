@@ -13,5 +13,6 @@ struct timing {
 typedef struct timing timing;
 
 int is_it_my_time(timing *t);
+uint64_t timing_field_from_int(uint64_t *dest, int i, unsigned int min, unsigned int max);
 
 #endif // TIMING_H

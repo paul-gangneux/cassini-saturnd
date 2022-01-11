@@ -4,13 +4,13 @@
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
-//#include <sys/types.h>
 #include <fcntl.h>
 #include <inttypes.h>
 
 #include "cassini.h"
 #include "custom-string.h"
 #include "timing-text-io.h"
+#include "commandline.h"
 
 const char usage_info[] = "\
    usage: cassini [OPTIONS] -l -> list all tasks\n\
@@ -30,29 +30,6 @@ const char usage_info[] = "\
    options:\n\
      -p PIPES_DIR -> look for the pipes in PIPES_DIR (default: /tmp/<USERNAME>/saturnd/pipes)\n\
 ";
-
-commandline *commandlineFromArgs(int argc, char *argv[]) {
-  commandline *cmdl = (commandline *)malloc(sizeof(commandline));
-  // on suppose que la commande à executer se trouve à la fin
-  int i = 1; // indice du début de la commande
-  while (i < argc) {
-    if (argv[i][0] == '-') {
-      if (argv[i][1] == 'c')
-        i++;
-      else if (strlen(argv[i]) > 2)
-        i++; // c'est vite fait mal fait mais ça fonctionne
-      else
-        i += 2;
-    } else
-      break;
-  }
-  cmdl->ARGC = argc - i;
-  cmdl->ARGVs = (string_p *)malloc(cmdl->ARGC * sizeof(string_p));
-  for (unsigned int j = 0; j < cmdl->ARGC; j++) {
-    cmdl->ARGVs[j] = string_create(argv[i + j]);
-  }
-  return cmdl;
-}
 
 // Ouvre le tube saturnd-request-pipe en ecriture si resquest==1 et le tube
 // saturnd-reply-pipe sinon renvoi -1 si erreure
@@ -272,11 +249,9 @@ int main(int argc, char *argv[]) {
 
       // We have our tasks, let's grab and decode each
       for (uint32_t i = 0; i < nb_tasks; i++) {
-        // TODO clean up that mess
         read(reply_pipe, &taskid, sizeof(uint64_t));
         taskid = be64toh(taskid);
 
-        // TODO print time
         read(reply_pipe, &timing.minutes, sizeof(uint64_t));
         timing.minutes = be64toh(timing.minutes);
 
