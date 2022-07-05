@@ -1,18 +1,19 @@
-# SY5-projet-2021-2022
+# saturnd - cassini
 
-Le projet du cours de systèmes d'exploitation (L3), 2021-2022
+## À propos
 
-Ce dépôt contient :
+Ce projet est un outil de planification de tâches, similaire à Cron. Programmé à l'ocasion d'un projet de 3eme année de licence, pour le cours de systèmes d'exploitation.
 
-  - l'[énoncé](enonce.md) du projet, complété de détails sur le
-    [protocole](protocole.md) de communication entre le démon et son
-    client,
+`saturnd` est un démon exécutant des tâches à intervalles réguliers, et `cassini` est le client qui permet de communiquer avec, utilisant des tubes nommés.
+Le fichier `protocole.md` précise l'le protocole demandé par le projet.
 
-  - un [script de test](run-cassini-tests.sh) du client (`cassini`), et
-    le jeu de [tests](tests) correspondant, 
+Programmé par Paul Gangneux, Lily Olivier, et Olivier Moreau.
 
-  - quelques fichiers sources pour vous aider à démarrer.
+## Compilation et exécution
 
-Par ailleurs, nous avons ouvert un [serveur
-discord](https://discord.gg/7ArJtu8Xnv) avec un salon dédié aux questions concernant le projet.
+`make` permet de compiler le client et le démon. `make distclean` permet de nettoyer le dépot.
+
+`saturnd` lance le démon, `cassini [options]` permet d'envoyer une requête au démon.
+`cassini -h` liste toutes les requêtes possibles.
+
 
